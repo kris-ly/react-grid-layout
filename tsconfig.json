@@ -1,0 +1,34 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "removeComments": false,
+        "moduleResolution": "node",
+        "preserveConstEnums": true,
+        "experimentalDecorators": true,
+        "strict": true,
+        "jsx": "react",
+        "jsxFactory": "React.createElement",
+        "target": "es5",
+        "sourceMap": true,
+        "skipLibCheck": true,
+        "baseUrl": "./",
+        "noImplicitAny": false,
+        "paths": {
+            "@src/*": [
+                "src/*"
+            ]
+        },
+        "types": [
+            "jest",
+            "node"
+        ]
+    },
+    "include": [
+        "src/**/*",
+        "declaration.d.ts",
+        "src/interfaces/*.d.ts"
+    ],
+    "exclude": [
+        "**/node_modules/*"
+    ]
+}

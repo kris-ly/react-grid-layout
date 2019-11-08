@@ -1,25 +1,24 @@
-'use strict';
+"use strict";
 
 module.exports = {
-  "presets": [
+  presets: [
     [
       "@babel/preset-env",
       {
-        targets: "> 0.25%, not dead",
+        targets: "> 0.25%, not dead"
       }
     ],
-    "@babel/react",
-    "@babel/preset-flow"
+    "@babel/preset-react",
+    "@babel/preset-typescript"
   ],
-  "plugins": [
-    "@babel/plugin-transform-flow-comments",
-    "@babel/plugin-proposal-class-properties",
+  plugins: [
+    "@babel/plugin-transform-runtime",
+    "@babel/plugin-transform-typescript",
+    "@babel/plugin-proposal-class-properties"
   ],
-  "env": {
-    "test": {
-      "plugins": [
-        "espower"
-      ]
+  env: {
+    test: {
+      plugins: ["espower"]
     }
   }
-}
+};
