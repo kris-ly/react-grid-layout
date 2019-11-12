@@ -70,6 +70,10 @@ export type Props = {
     onDrag: EventCallback;
     onDragStart: EventCallback;
     onDragStop: EventCallback;
+    onDragNewItemEnter: any;
+    onDragNewItemLeave: any;
+    dragEnterChild: boolean;
+    rglName: string;
     onResize: EventCallback;
     onResizeStart: EventCallback;
     onResizeStop: EventCallback;
@@ -203,7 +207,10 @@ class RGL extends React.Component<Props, State> {
         onResizeStop: PropTypes.func,
         // Calls when some element is dropped.
         onDrop: PropTypes.func,
-
+        onDragNewItemEnter: PropTypes.func,
+        onDragNewItemLeave: PropTypes.func,
+        dragEnterChild: PropTypes.bool,
+        rglName: PropTypes.string,
         //
         // Other validations
         //
@@ -262,6 +269,10 @@ class RGL extends React.Component<Props, State> {
         onDragStart: noop,
         onDrag: noop,
         onDragStop: noop,
+        onDragNewItemEnter: noop,
+        onDragNewItemLeave: noop,
+        dragEnterChild: false,
+        rglName: '',
         onResizeStart: noop,
         onResize: noop,
         onResizeStop: noop,
@@ -463,7 +474,6 @@ class RGL extends React.Component<Props, State> {
         node,
     }: GridDragEvent) {
         const { oldDragItem } = this.state;
-        console.log('onDragStop', oldDragItem);
         let { layout } = this.state;
         const { cols, preventCollision } = this.props;
         const l = getLayoutItem(layout, i);
@@ -609,7 +619,7 @@ class RGL extends React.Component<Props, State> {
    */
     placeholder(): React.ReactElement<any> | null | undefined {
         const { activeDrag } = this.state;
-        if (!activeDrag) return null;
+        if (!activeDrag || this.props.dragEnterChild) return null;
         const {
             width,
             cols,
@@ -651,8 +661,8 @@ class RGL extends React.Component<Props, State> {
    * @param  {Element} child React element.
    * @return {Element}       Element wrapped in draggable and properly placed.
    */
-    processGridItem(child: React.ReactElement<any>, isDroppingItem?: boolean): React.ReactElement<any> | null | undefined {
-        if (!child || !child.key) return;
+    processGridItem(child: React.ReactElement<any>, isDroppingItem?: boolean): React.ReactElement<any> | null {
+        if (!child || !child.key) return null;
         const l = getLayoutItem(this.state.layout, String(child.key));
         if (!l) return null;
         const {
@@ -753,7 +763,6 @@ class RGL extends React.Component<Props, State> {
                 || this.state.droppingPosition.y != layerY;
             shouldUpdatePosition && this.setState({ droppingPosition });
         }
-
         e.stopPropagation();
         e.preventDefault();
     };
@@ -777,10 +786,7 @@ class RGL extends React.Component<Props, State> {
     };
 
     onDragLeave = () => {
-        console.log('onDragLeave');
-
         this.dragEnterCounter--;
-
         // onDragLeave can be triggered on each layout's child.
         // But we know that count of dragEnter and dragLeave events
         // will be balanced after leaving the layout's container
@@ -788,10 +794,14 @@ class RGL extends React.Component<Props, State> {
         // when it'll be equal to 0 we'll remove the placeholder
         if (this.dragEnterCounter === 0) {
             this.removeDroppingPlaceholder();
+            this.props.onDragNewItemLeave();
         }
     };
 
     onDragEnter = () => {
+        if (this.dragEnterCounter === 0) {
+            this.props.onDragNewItemEnter();
+        }
         this.dragEnterCounter++;
     };
 
@@ -813,7 +823,9 @@ class RGL extends React.Component<Props, State> {
     };
 
     render() {
-        const { className, style, isDroppable } = this.props;
+        const {
+            className, style, isDroppable, rglName,
+        } = this.props;
 
         const mergedClassName = classNames(layoutClassName, className);
         const mergedStyle = {

@@ -90,7 +90,7 @@ export type EventCallback = (
 export type CompactType = 'horizontal' | 'vertical' | null | undefined;
 
 const isProduction = process.env.NODE_ENV === 'production';
-const DEBUG = true;
+const DEBUG = false;
 
 /**
  * Return the bottom coordinate of the layout.
