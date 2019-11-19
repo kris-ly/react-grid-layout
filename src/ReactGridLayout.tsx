@@ -617,7 +617,7 @@ class RGL extends React.Component<Props, State> {
    * Create a placeholder object.
    * @return {Element} Placeholder div.
    */
-    placeholder(): React.ReactElement<any> | null | undefined {
+    placeholder(): React.ReactElement<any> | null {
         const { activeDrag } = this.state;
         if (!activeDrag || this.props.dragEnterChild) return null;
         const {
