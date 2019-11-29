@@ -1,7 +1,7 @@
 {
   "name": "react-grid-layout",
-  "version": "0.17.0",
-  "description": "A draggable and resizable grid layout with responsive breakpoints, for React.",
+  "version": "0.1.0",
+  "description": "A draggable and resizable grid layout for React.",
   "main": "index.js",
   "scripts": {
     "lint": "make lint",
@@ -14,29 +14,17 @@
     "validate": "npm ls",
     "flow": "flow",
     "pack": "webpack",
-    "tsc": "tsc --outDir build",
+    "tsc": "tsc --outDir library",
     "precommit": "lint-staged && make lint"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:STRML/react-grid-layout.git"
   },
   "keywords": [
     "react",
     "grid",
-    "drag",
     "draggable",
-    "resize",
     "resizable",
-    "fluid",
     "responsive"
   ],
-  "author": "Samuel Reed <samuel.trace.reed@gmail.com> (http://strml.net/)",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/STRML/react-grid-layout/issues"
-  },
-  "homepage": "https://github.com/STRML/react-grid-layout",
+  "author": "liuyang146@meituan.com",
   "dependencies": {
     "@babel/plugin-transform-runtime": "^7.6.2",
     "@babel/preset-typescript": "^7.7.2",
@@ -95,15 +83,6 @@
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9",
     "webpack-dev-server": "^3.9.0"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org"
-  },
-  "jest": {
-    "testMatch": [
-      "<rootDir>/test/spec/*.js"
-    ],
-    "testURL": "http://localhost"
   },
   "lint-staged": {
     "*.{js,jsx,css}": [
