@@ -370,10 +370,10 @@ export function getStatics(layout: Layout): Array<LayoutItem> {
 export function moveElement(
     layout: Layout,
     l: LayoutItem,
-    x: number | null | undefined,
-    y: number | null | undefined,
-    isUserAction: boolean | null | undefined,
-    preventCollision: boolean | null | undefined,
+    x: number | undefined,
+    y: number | undefined,
+    isUserAction: boolean | undefined,
+    preventCollision: boolean | undefined,
     compactType: CompactType,
     cols: number,
 ): Layout {
@@ -462,7 +462,7 @@ export function moveElementAwayFromCollision(
     layout: Layout,
     collidesWith: LayoutItem,
     itemToMove: LayoutItem,
-    isUserAction: boolean | null | undefined,
+    isUserAction: boolean | undefined,
     compactType: CompactType,
     cols: number,
 ): Layout {
