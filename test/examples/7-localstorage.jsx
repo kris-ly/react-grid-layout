@@ -1,7 +1,7 @@
 import React from "react";
-import RGL, { WidthProvider } from "react-grid-layout";
+import RED, { WidthProvider } from "@dfe/react-easy-drag";
 
-const ReactGridLayout = WidthProvider(RGL);
+const ReactGridLayout = WidthProvider(RED);
 const originalLayout = getFromLS("layout") || [];
 /**
  * This layout demonstrates how to sync to localstorage.

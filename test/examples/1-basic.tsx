@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as _ from 'lodash';
-import * as RGL from 'react-grid-layout';
+import * as RED from '@dfe/react-easy-drag';
 
-const WidthProvider = RGL.WidthProvider;
-const ReactGridLayout = WidthProvider(RGL);
+const WidthProvider = RED.WidthProvider;
+const ReactGridLayout = WidthProvider(RED);
 
 export default class BasicLayout extends React.PureComponent {
     static defaultProps = {

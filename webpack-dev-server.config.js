@@ -79,7 +79,7 @@ module.exports = {
     resolve: {
         extensions: ['.webpack.js', '.web.js', '.js', '.jsx', '.ts', '.tsx'],
         alias: {
-            'react-grid-layout': path.join(__dirname, 'index-dev.js'),
+            '@dfe/react-easy-drag': path.join(__dirname, 'index.js'),
         },
     },
 };

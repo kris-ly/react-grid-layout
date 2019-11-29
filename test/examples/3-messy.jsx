@@ -1,8 +1,8 @@
 import React from "react";
 import _ from "lodash";
-import RGL, { WidthProvider } from "react-grid-layout";
+import RED, { WidthProvider } from "@dfe/react-easy-drag";
 
-const ReactGridLayout = WidthProvider(RGL);
+const ReactGridLayout = WidthProvider(RED);
 
 export default class MessyLayout extends React.PureComponent {
   static defaultProps = {

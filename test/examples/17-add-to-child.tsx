@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as _ from 'lodash';
-import * as RGL from 'react-grid-layout';
+import * as RED from '@dfe/react-easy-drag';
 
-const WidthProvider = RGL.WidthProvider;
-const ReactGridLayout = WidthProvider(RGL);
+const WidthProvider = RED.WidthProvider;
+const ReactGridLayout = WidthProvider(RED);
 
 export default class BasicLayout extends React.PureComponent {
     static defaultProps = {
@@ -45,7 +45,6 @@ export default class BasicLayout extends React.PureComponent {
                             layout={layout}
                             droppingItem={{ w: 2, h: 4, i: '21' }}
                             isDroppable
-                            rglName="son"
                             onDragNewItemEnter={() => {
                                 console.log('onDragNewItemEnter');
                                 this.setState({
@@ -132,7 +131,6 @@ export default class BasicLayout extends React.PureComponent {
                 <ReactGridLayout
                     layout={layout}
                     dragEnterChild={dragEnterChild}
-                    rglName="father"
                     droppingItem={{ w: 2, h: 4, i: '21' }}
                     style={{ border: '1px solid #333' }}
                     draggableHandle=".drag-layout-handle-area"

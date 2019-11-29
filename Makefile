@@ -50,31 +50,3 @@ lint:
 
 test:
 	@$(BIN)/jest
-
-release-patch: build lint test
-	@$(call release,patch)
-
-release-minor: build lint test
-	@$(call release,minor)
-
-release-major: build lint test
-	@$(call release,major)
-
-publish:
-	git push --tags origin HEAD:master
-	npm publish
-
-define release
-	VERSION=`node -pe "require('./package.json').version"` && \
-	NEXT_VERSION=`node -pe "require('semver').inc(\"$$VERSION\", '$(1)')"` && \
-	node -e "\
-		['./package.json'].forEach(function(fileName) {\
-			var j = require(fileName);\
-			j.version = \"$$NEXT_VERSION\";\
-			var s = JSON.stringify(j, null, 2);\
-			require('fs').writeFileSync(fileName, s);\
-		});" && \
-	git add package.json CHANGELOG.md $(MIN) $(MIN_MAP) && \
-	git commit -m "release $$NEXT_VERSION" && \
-	git tag "$$NEXT_VERSION" -m "release $$NEXT_VERSION"
-endef

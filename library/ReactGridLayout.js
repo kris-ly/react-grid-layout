@@ -412,7 +412,7 @@ var RGL = /** @class */ (function (_super) {
     };
     RGL.prototype.render = function () {
         var _this = this;
-        var _a = this.props, className = _a.className, style = _a.style, isDroppable = _a.isDroppable, rglName = _a.rglName;
+        var _a = this.props, className = _a.className, style = _a.style, isDroppable = _a.isDroppable;
         var mergedClassName = classNames(layoutClassName, className);
         var mergedStyle = __assign({ height: this.containerHeight() }, style);
         return (React.createElement("div", { className: mergedClassName, style: mergedStyle, onDrop: isDroppable ? this.onDrop : utils_1.noop, onDragLeave: isDroppable ? this.onDragLeave : utils_1.noop, onDragEnter: isDroppable ? this.onDragEnter : utils_1.noop, onDragOver: isDroppable ? this.onDragOver : utils_1.noop },
@@ -514,7 +514,6 @@ var RGL = /** @class */ (function (_super) {
         onDragNewItemEnter: PropTypes.func,
         onDragNewItemLeave: PropTypes.func,
         dragEnterChild: PropTypes.bool,
-        rglName: PropTypes.string,
         //
         // Other validations
         //
@@ -568,7 +567,6 @@ var RGL = /** @class */ (function (_super) {
         onDragNewItemEnter: utils_1.noop,
         onDragNewItemLeave: utils_1.noop,
         dragEnterChild: false,
-        rglName: '',
         onResizeStart: utils_1.noop,
         onResize: utils_1.noop,
         onResizeStop: utils_1.noop,

@@ -1,6 +1,6 @@
 import React from "react";
 import _ from "lodash";
-import { Responsive, WidthProvider } from "react-grid-layout";
+import { Responsive, WidthProvider } from "@dfe/react-easy-drag";
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
 
 export default class ShowcaseLayout extends React.Component {

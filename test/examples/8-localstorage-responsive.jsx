@@ -1,5 +1,5 @@
 import React from "react";
-import { WidthProvider, Responsive } from "react-grid-layout";
+import { WidthProvider, Responsive } from "@dfe/react-easy-drag";
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
 const originalLayouts = getFromLS("layouts") || {};

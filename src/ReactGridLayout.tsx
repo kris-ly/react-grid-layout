@@ -73,7 +73,6 @@ export type Props = {
     onDragNewItemEnter: any;
     onDragNewItemLeave: any;
     dragEnterChild: boolean;
-    rglName: string;
     onResize: EventCallback;
     onResizeStart: EventCallback;
     onResizeStop: EventCallback;
@@ -210,7 +209,6 @@ class RGL extends React.Component<Props, State> {
         onDragNewItemEnter: PropTypes.func,
         onDragNewItemLeave: PropTypes.func,
         dragEnterChild: PropTypes.bool,
-        rglName: PropTypes.string,
         //
         // Other validations
         //
@@ -272,7 +270,6 @@ class RGL extends React.Component<Props, State> {
         onDragNewItemEnter: noop,
         onDragNewItemLeave: noop,
         dragEnterChild: false,
-        rglName: '',
         onResizeStart: noop,
         onResize: noop,
         onResizeStop: noop,
@@ -824,7 +821,7 @@ class RGL extends React.Component<Props, State> {
 
     render() {
         const {
-            className, style, isDroppable, rglName,
+            className, style, isDroppable,
         } = this.props;
 
         const mergedClassName = classNames(layoutClassName, className);
