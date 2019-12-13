@@ -1,14 +1,18 @@
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
-import { isEqual } from 'lodash';
+import { isEqual, debounce } from 'lodash';
 import * as classNames from 'classnames';
 import {
     autoBindHandlers,
     bottom,
+    outOfBoundary,
     childrenEqual,
     cloneLayoutItem,
     compact,
     getLayoutItem,
+    getLayoutItemIndex,
+    getOffset,
+    calcXY,
     moveElement,
     synchronizeLayoutWithChildren,
     validateLayout,
@@ -16,7 +20,6 @@ import {
     noop,
 } from './utils';
 import GridItem from './GridItem';
-
 import {
     EventCallback,
     CompactType,
@@ -24,9 +27,11 @@ import {
     GridDragEvent,
     DragOverEvent,
     Layout,
+    Position,
     DroppingPosition,
     LayoutItem,
 } from './utils';
+
 
 type State = {
     activeDrag: LayoutItem | null | undefined;
@@ -35,7 +40,7 @@ type State = {
     oldDragItem: LayoutItem | null | undefined;
     oldLayout: Layout | null | undefined;
     oldResizeItem: LayoutItem | null | undefined;
-    droppingDOMNode: React.ReactElement<any> | null | undefined;
+    droppingDOMNode: React.ReactElement<any> | HTMLElement | null;
     droppingPosition?: DroppingPosition;
     // Mirrored props
     children: Array<React.ReactElement<any>>;
@@ -66,7 +71,13 @@ export type Props = {
     transformScale: number;
     droppingItem: Partial<LayoutItem>;
     // Callbacks
-    onLayoutChange: (a: Layout) => void;
+    onLayoutChange: (a: Layout, b: Position) => void;
+    onItemOut: (l: LayoutItem, clientX: number, clientY: number) => void;
+    otherGridItemDroppingPosition: {
+        x: number;
+        y: number;
+    };
+    otherGridItemEntered: boolean;
     onDrag: EventCallback;
     onDragStart: EventCallback;
     onDragStop: EventCallback;
@@ -190,7 +201,12 @@ class RGL extends React.Component<Props, State> {
 
         // Callback so you can save the layout. Calls after each drag & resize stops.
         onLayoutChange: PropTypes.func,
-
+        onItemOut: PropTypes.func,
+        otherGridItemEntered: PropTypes.bool,
+        otherGridItemDroppingPosition: PropTypes.shape({
+            x: PropTypes.number,
+            y: PropTypes.number,
+        }),
         // Calls when drag starts. Callback is of the signature (layout, oldItem, newItem, placeholder, e, ?node).
         // All callbacks below have the same signature. 'start' and 'stop' callbacks omit the 'placeholder'.
         onDragStart: PropTypes.func,
@@ -214,6 +230,8 @@ class RGL extends React.Component<Props, State> {
         //
 
         droppingItem: PropTypes.shape({
+            x: PropTypes.number,
+            y: PropTypes.number,
             i: PropTypes.string.isRequired,
             w: PropTypes.number.isRequired,
             h: PropTypes.number.isRequired,
@@ -258,12 +276,14 @@ class RGL extends React.Component<Props, State> {
         verticalCompact: true,
         compactType: 'vertical',
         preventCollision: false,
+        otherGridItemEntered: false,
         droppingItem: {
             i: '__dropping-elem__',
             h: 1,
             w: 1,
         },
         onLayoutChange: noop,
+        onItemOut: noop,
         onDragStart: noop,
         onDrag: noop,
         onDragStop: noop,
@@ -294,6 +314,17 @@ class RGL extends React.Component<Props, State> {
     };
 
     dragEnterCounter = 0;
+
+    rglContainer: any = null;
+
+    onItemOut: any = noop;
+
+    rglContainerPos: Position = {
+        left: 0,
+        top: 0,
+        width: 0,
+        height: 0,
+    }
 
     constructor(props: Props, context: any) {
         super(props, context);
@@ -354,9 +385,8 @@ class RGL extends React.Component<Props, State> {
         this.setState({ mounted: true });
         // Possibly call back with layout on mount. This should be done after correcting the layout width
         // to ensure we don't rerender with the wrong width.
-        this.onLayoutMaybeChanged(this.state.layout, this.props.layout);
+        this.onLayoutMaybeChanged(this.state.layout, this.props.layout, true);
     }
-
 
     componentDidUpdate(prevProps: Props, prevState: State) {
         if (!this.state.activeDrag) {
@@ -383,6 +413,24 @@ class RGL extends React.Component<Props, State> {
             + containerPaddingY * 2
             }px`
         );
+    }
+
+    calcXY(top: number, left: number): {
+        x: number;
+        y: number;
+    } {
+        const {
+            margin, cols, rowHeight, containerPadding, width,
+        } = this.props;
+
+
+        const padding = containerPadding || margin;
+        const colWidth = (width - margin[0] * (cols - 1) - padding[0] * 2) / cols;
+
+        const x = Math.round((left - margin[0]) / (colWidth + margin[0]));
+        const y = Math.round((top - margin[1]) / (rowHeight + margin[1]));
+
+        return { x, y };
     }
 
     /**
@@ -431,11 +479,24 @@ class RGL extends React.Component<Props, State> {
         const placeholder = {
             w: l.w,
             h: l.h,
-            x: l.x,
-            y: l.y,
+            x,
+            y,
             placeholder: true,
             i,
         };
+        if (outOfBoundary(cols, bottom(layout), {
+            x, y, w: l.w, h: l.h,
+        })) {
+            const { clientX, clientY } = e as any;
+            this.props.onItemOut(l, clientX, clientY);
+            this.setState({
+                activeDrag: null,
+            });
+        } else {
+            this.setState({
+                activeDrag: placeholder,
+            });
+        }
 
         // Move the element to the dragged location.
         const isUserAction = true;
@@ -454,7 +515,6 @@ class RGL extends React.Component<Props, State> {
 
         this.setState({
             layout: compact(layout, compactType(this.props), cols),
-            activeDrag: placeholder,
         });
     }
 
@@ -475,19 +535,28 @@ class RGL extends React.Component<Props, State> {
         const { cols, preventCollision } = this.props;
         const l = getLayoutItem(layout, i);
         if (!l) return;
+        if (outOfBoundary(cols, bottom(layout), {
+            x, y, w: l.w, h: l.h,
+        })) {
+            console.log('onDragStop outOfBoundary');
+            const idx = getLayoutItemIndex(layout, i);
 
-        // Move the element here
-        const isUserAction = true;
-        layout = moveElement(
-            layout,
-            l,
-            x,
-            y,
-            isUserAction,
-            preventCollision,
-            compactType(this.props),
-            cols,
-        );
+            layout.splice(idx, 1);
+        } else {
+            // Move the element here
+            const isUserAction = true;
+            layout = moveElement(
+                layout,
+                l,
+                x,
+                y,
+                isUserAction,
+                preventCollision,
+                compactType(this.props),
+                cols,
+            );
+        }
+
         if (this.state.activeDrag) {
             this.props.onDragStop(layout, oldDragItem, l, null, e, node);
         }
@@ -505,11 +574,26 @@ class RGL extends React.Component<Props, State> {
         this.onLayoutMaybeChanged(newLayout, oldLayout);
     }
 
-    onLayoutMaybeChanged(newLayout: Layout, oldLayout: Layout | null | undefined) {
+    onLayoutMaybeChanged(newLayout: Layout, oldLayout: Layout | null | undefined, isForce?: boolean) {
         if (!oldLayout) oldLayout = this.state.layout;
+        // 计算容器位置
+        const containerEl = this.rglContainer;
+        const containerOffset = getOffset(containerEl);
+        const width: any = containerEl.clientWidth;
+        const height: any = containerEl.clientHeight;
+
+        this.rglContainerPos = {
+            ...containerOffset,
+            width,
+            height,
+        };
+        if (isForce) {
+            this.props.onLayoutChange(newLayout, this.rglContainerPos);
+            return;
+        }
 
         if (!isEqual(oldLayout, newLayout)) {
-            this.props.onLayoutChange(newLayout);
+            this.props.onLayoutChange(newLayout, this.rglContainerPos);
         }
     }
 
@@ -617,6 +701,7 @@ class RGL extends React.Component<Props, State> {
     placeholder(): React.ReactElement<any> | null {
         const { activeDrag } = this.state;
         if (!activeDrag || this.props.dragEnterChild) return null;
+
         const {
             width,
             cols,
@@ -709,41 +794,38 @@ class RGL extends React.Component<Props, State> {
                 transformScale={transformScale}
                 w={l.w}
                 h={l.h}
-                x={l.x}
-                y={l.y}
+                x={isDroppingItem && droppingPosition ? droppingPosition.x : l.x}
+                y={isDroppingItem && droppingPosition ? droppingPosition.y : l.y}
                 i={l.i}
                 minH={l.minH}
                 minW={l.minW}
                 maxH={l.maxH}
                 maxW={l.maxW}
                 static={l.static}
-                droppingPosition={isDroppingItem ? droppingPosition : undefined}
+                isDroppingItem={!!isDroppingItem}
             >
                 {child}
             </GridItem>
         );
     }
 
-    onDragOver = (e: DragOverEvent) => {
-        // we should ignore events from layout's children in Firefox
-        // to avoid unpredictable jumping of a dropping placeholder
-        if (
-            isFirefox
-            && !e.nativeEvent.target.className.includes(layoutClassName)
-        ) {
-            return false;
-        }
-
-        const { droppingItem } = this.props;
+    moveItem = (droppingItem, layerX, layerY, e) => {
         const { layout } = this.state;
-        const { layerX, layerY } = e.nativeEvent;
-        const droppingPosition = { x: layerX, y: layerY, e };
+        const {
+            margin, containerPadding, width, cols, rowHeight,
+        } = this.props;
+        const { x, y } = calcXY(layerY, layerX, {
+            margin, containerPadding, width, cols, rowHeight,
+        });
 
         if (!this.state.droppingDOMNode) {
             // @ts-ignore
             this.setState({
                 droppingDOMNode: <div key={droppingItem.i} />,
-                droppingPosition,
+                droppingPosition: {
+                    x: layerX,
+                    y: layerY,
+                },
                 layout: [
                     ...layout,
                     {
@@ -756,10 +838,36 @@ class RGL extends React.Component<Props, State> {
                 ],
             });
         } else if (this.state.droppingPosition) {
-            const shouldUpdatePosition = this.state.droppingPosition.x != layerX
-                || this.state.droppingPosition.y != layerY;
-            shouldUpdatePosition && this.setState({ droppingPosition });
+            const shouldUpdatePosition = this.state.droppingPosition.x !== layerX
+                || this.state.droppingPosition.y !== layerY;
+            shouldUpdatePosition && this.setState({
+                droppingPosition: {
+                    x: layerX,
+                    y: layerY,
+                },
+            });
         }
+
+        this.onDrag(droppingItem.i, x, y, { e });
+    }
+
+    onDragOver = (e: DragOverEvent) => {
+        // we should ignore events from layout's children in Firefox
+        // to avoid unpredictable jumping of a dropping placeholder
+        if (
+            isFirefox
+            && !e.nativeEvent.target.className.includes(layoutClassName)
+        ) {
+            return false;
+        }
+
+        const {
+            droppingItem,
+        } = this.props;
+        const { layerX, layerY } = e.nativeEvent;
+
+        this.moveItem(droppingItem, layerX, layerY, e);
+
         e.stopPropagation();
         e.preventDefault();
     };
@@ -834,6 +942,7 @@ class RGL extends React.Component<Props, State> {
             <div
                 className={mergedClassName}
                 style={mergedStyle}
+                ref={(ref) => { this.rglContainer = ref; }}
                 onDrop={isDroppable ? this.onDrop : noop}
                 onDragLeave={isDroppable ? this.onDragLeave : noop}
                 onDragEnter={isDroppable ? this.onDragEnter : noop}

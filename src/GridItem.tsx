@@ -11,7 +11,6 @@ import {
     ReactDraggableCallbackData,
     GridDragEvent,
     GridResizeEvent,
-    DroppingPosition,
     Position,
 } from './utils';
 
@@ -48,7 +47,7 @@ type Props = {
     useCSSTransforms?: boolean;
     usePercentages?: boolean;
     transformScale: number;
-    droppingPosition?: DroppingPosition;
+    isDroppingItem: boolean;
     className: string;
     style?: any;
     // Draggability
@@ -145,11 +144,7 @@ export default class GridItem extends React.Component<Props, State> {
         // Selector for draggable cancel (see react-draggable)
         cancel: PropTypes.string,
         // Current position of a dropping element
-        droppingPosition: PropTypes.shape({
-            e: PropTypes.object.isRequired,
-            x: PropTypes.number.isRequired,
-            y: PropTypes.number.isRequired,
-        }),
+        isDroppingItem: PropTypes.bool.isRequired,
     };
 
     static defaultProps = {
@@ -171,46 +166,6 @@ export default class GridItem extends React.Component<Props, State> {
 
     currentNode: HTMLElement | null = null;
 
-    componentDidUpdate(prevProps: Props) {
-        if (this.props.droppingPosition && prevProps.droppingPosition) {
-            this.moveDroppingItem(prevProps);
-        }
-    }
-
-    moveDroppingItem(prevProps: Props) {
-        const { droppingPosition } = this.props;
-        const { dragging } = this.state;
-
-        if (!droppingPosition || !prevProps.droppingPosition) {
-            return;
-        }
-
-        if (!this.currentNode) {
-            // eslint-disable-next-line react/no-find-dom-node
-            this.currentNode = (ReactDOM.findDOMNode(this) as any as HTMLElement);
-        }
-
-        const shouldDrag = (dragging && droppingPosition.x !== prevProps.droppingPosition.x)
-            || droppingPosition.y !== prevProps.droppingPosition.y;
-
-        if (!dragging) {
-            this.onDragStart(droppingPosition.e, {
-                node: this.currentNode,
-                deltaX: droppingPosition.x,
-                deltaY: droppingPosition.y,
-            });
-        } else if (shouldDrag) {
-            const deltaX = droppingPosition.x - dragging.left;
-            const deltaY = droppingPosition.y - dragging.top;
-
-            this.onDrag(droppingPosition.e, {
-                node: this.currentNode,
-                deltaX,
-                deltaY,
-            });
-        }
-    }
-
     // Helper for generating column width
     calcColWidth(): number {
         const {
@@ -231,7 +186,9 @@ export default class GridItem extends React.Component<Props, State> {
    * @return {Object}                Object containing coords.
    */
     calcPosition(x: number, y: number, w: number, h: number, state?: any): Position {
-        const { margin, containerPadding, rowHeight } = this.props;
+        const {
+            margin, containerPadding, rowHeight, isDroppingItem,
+        } = this.props;
         const colWidth = this.calcColWidth();
         const out: any = {};
 
@@ -239,9 +196,7 @@ export default class GridItem extends React.Component<Props, State> {
         if (state && state.resizing) {
             out.width = Math.round(state.resizing.width);
             out.height = Math.round(state.resizing.height);
-        }
-        // Otherwise, calculate from grid units.
-        else {
+        } else { // Otherwise, calculate from grid units.
             // 0 * Infinity === NaN, which causes problems with resize constraints;
             // Fix this if it occurs.
             // Note we do it here rather than later because Math.round(Infinity) causes deopt
@@ -257,9 +212,10 @@ export default class GridItem extends React.Component<Props, State> {
         if (state && state.dragging) {
             out.top = Math.round(state.dragging.top);
             out.left = Math.round(state.dragging.left);
-        }
-        // Otherwise, calculate from grid units.
-        else {
+        } else if (isDroppingItem) {
+            out.top = Math.round(y);
+            out.left = Math.round(x);
+        } else { // Otherwise, calculate from grid units.
             out.top = Math.round((rowHeight + margin[1]) * y + containerPadding[1]);
             out.left = Math.round((colWidth + margin[0]) * x + containerPadding[0]);
         }
@@ -289,12 +245,12 @@ export default class GridItem extends React.Component<Props, State> {
         // l - m = x(c + m)
         // (l - m) / (c + m) = x
         // x = (left - margin) / (coldWidth + margin)
-        let x = Math.round((left - margin[0]) / (colWidth + margin[0]));
-        let y = Math.round((top - margin[1]) / (rowHeight + margin[1]));
+        const x = Math.round((left - margin[0]) / (colWidth + margin[0]));
+        const y = Math.round((top - margin[1]) / (rowHeight + margin[1]));
 
         // Capping
-        x = Math.max(Math.min(x, cols - w), 0);
-        y = Math.max(Math.min(y, maxRows - h), 0);
+        // x = Math.max(Math.min(x, cols - w), 0);
+        // y = Math.max(Math.min(y, maxRows - h), 0);
 
         return { x, y };
     }
@@ -618,8 +574,8 @@ export default class GridItem extends React.Component<Props, State> {
             w,
             h,
             isDraggable,
+            isDroppingItem,
             isResizable,
-            droppingPosition,
             useCSSTransforms,
         } = this.props;
 
@@ -637,7 +593,7 @@ export default class GridItem extends React.Component<Props, State> {
                     resizing: Boolean(this.state.resizing),
                     'react-draggable': isDraggable,
                     'react-draggable-dragging': Boolean(this.state.dragging),
-                    dropping: Boolean(droppingPosition),
+                    dropping: isDroppingItem,
                     cssTransforms: useCSSTransforms,
                 },
             ),

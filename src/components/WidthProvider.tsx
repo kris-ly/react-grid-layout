@@ -70,6 +70,7 @@ export default function WidthProvider(
 
             return (
                 <ComposedComponent
+                    ref={ref => this.rgl = ref}
                     {...rest}
                     {...this.state}
                 />

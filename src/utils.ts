@@ -44,7 +44,7 @@ export type PartialPosition = {
 export type DroppingPosition = {
     x: number;
     y: number;
-    e: Event;
+    e?: Event;
 };
 
 export type Size = {
@@ -54,9 +54,17 @@ export type Size = {
 
 export type GridDragEvent = {
     e: Event;
-    node: HTMLElement;
-    newPosition: PartialPosition;
+    node?: HTMLElement | null;
+    newPosition?: PartialPosition;
 };
+
+export interface ContainerSettings {
+    margin: [number, number];
+    containerPadding: [number, number] | null;
+    rowHeight: number;
+    cols: number;
+    width: number;
+}
 
 export type GridResizeEvent = {
     e: Event;
@@ -106,6 +114,62 @@ export function bottom(layout: Layout): number {
         if (bottomY > max) max = bottomY;
     }
     return max;
+}
+
+export function outOfBoundary(width, height, node): boolean {
+    const {
+        x, y, w, h,
+    } = node;
+    if (x < 0 || y < 0) return true;
+    if (x + w > width || y + h > height) return true;
+    return false;
+}
+
+export function isMouseIn(x: number, y: number, position: Position): boolean {
+    const {
+        width, height, left, top,
+    } = position;
+
+    if (x > left && x < left + width && y > top && y < top + height) {
+        return true;
+    }
+    return false;
+}
+
+export function getOffset(element): {
+    left: number;
+    top: number;
+} {
+    let actualLeft = element.offsetLeft;
+    let actualTop = element.offsetTop;
+    let current = element.offsetParent;
+
+    while (current !== null) {
+        actualLeft += current.offsetLeft;
+        actualTop += current.offsetTop;
+        current = current.offsetParent;
+    }
+
+    return {
+        left: actualLeft,
+        top: actualTop,
+    };
+}
+
+export function calcXY(top: number, left: number, settings: ContainerSettings): {
+    x: number;
+    y: number;
+} {
+    const {
+        margin, cols, rowHeight, containerPadding, width,
+    } = settings;
+    const padding = containerPadding || margin;
+    const colWidth = (width - margin[0] * (cols - 1) - padding[0] * 2) / cols;
+
+    const x = Math.round((left - margin[0]) / (colWidth + margin[0]));
+    const y = Math.round((top - margin[1]) / (rowHeight + margin[1]));
+
+    return { x, y };
 }
 
 export function cloneLayout(layout: Layout): Layout {
@@ -330,6 +394,13 @@ export function getLayoutItem(layout: Layout, id: string): LayoutItem | null | u
     for (let i = 0, len = layout.length; i < len; i++) {
         if (layout[i].i === id) return layout[i];
     }
+}
+
+export function getLayoutItemIndex(layout: Layout, id: string): number {
+    for (let i = 0, len = layout.length; i < len; i++) {
+        if (layout[i].i === id) return i;
+    }
+    return -1;
 }
 
 /**
