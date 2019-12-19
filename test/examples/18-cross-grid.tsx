@@ -5,7 +5,6 @@ import * as RED from '@dfe/react-easy-drag';
 const { utils, WidthProvider } = RED;
 const ReactGridLayout = WidthProvider(RED);
 const { isMouseIn } = utils;
-const droppingItem = { w: 2, h: 4, i: '21' };
 
 export default class BasicLayout extends React.PureComponent<any, any> {
     static defaultProps = {
@@ -33,6 +32,7 @@ export default class BasicLayout extends React.PureComponent<any, any> {
                 x: 0,
                 y: 0,
             },
+            droppingItem: { w: 2, h: 4, i: '21' },
         };
     }
 
@@ -67,17 +67,32 @@ export default class BasicLayout extends React.PureComponent<any, any> {
 
     checkItemPostion = (key, layoutItem, clientX, clientY) => {
         const { rglContainerPos } = this;
+        const { droppingItem, enteredRgl } = this.state;
 
         const rglContainerKeys = Object.keys(rglContainerPos);
-
-        let index = 0;
-        for (let len = rglContainerKeys.length; index < len; index++) {
+        // 遍历每个rgl container
+        for (let index = 0, len = rglContainerKeys.length; index < len; index++) {
             const layoutKey = rglContainerKeys[index];
-            if (layoutKey === key) continue;
+            // eslint-disable-next-line
+            if (layoutKey === key) continue; // 如果是自身内部的grid item
+            const curRglContainer = this[layoutKey].rgl;
+            const isItemIn = isMouseIn(clientX, clientY, rglContainerPos[layoutKey]);
+            // 如果之前进入了某个container，现在离开了
+            if (enteredRgl === layoutKey && !isItemIn) {
+                curRglContainer.removeDroppingPlaceholder();
+                // eslint-disable-next-line
+                continue;
+            }
 
-            if (isMouseIn(clientX, clientY, rglContainerPos[layoutKey])) {
+            // 如果进入了
+            if (isItemIn) {
+                const newDroppingItem = {
+                    i: droppingItem.i,
+                    w: layoutItem.w,
+                    h: layoutItem.h,
+                };
                 const { left, top } = rglContainerPos[layoutKey];
-                this[layoutKey].rgl.moveItem(droppingItem, clientX - left, clientY - top, window.Event);
+                curRglContainer.moveItem(newDroppingItem, clientX - left, clientY - top, window.Event);
 
                 this.setState({
                     enteredRgl: layoutKey,
@@ -93,7 +108,7 @@ export default class BasicLayout extends React.PureComponent<any, any> {
 
     render() {
         const {
-            layout, enteredRgl, otherGridItemDroppingPosition,
+            layout, enteredRgl, otherGridItemDroppingPosition, droppingItem,
         } = this.state;
 
         return (
@@ -108,7 +123,7 @@ export default class BasicLayout extends React.PureComponent<any, any> {
                 </div>
                 <ReactGridLayout
                     layout={layout}
-                    ref={ref => this.rgl1 = ref}
+                    ref={(ref) => { this.rgl1 = ref; }}
                     onItemOut={(l, x, y) => {
                         this.checkItemPostion('rgl2', l, x, y);
                     }}
@@ -127,7 +142,7 @@ export default class BasicLayout extends React.PureComponent<any, any> {
                 </ReactGridLayout>
                 <ReactGridLayout
                     layout={layout}
-                    ref={ref => this.rgl2 = ref}
+                    ref={(ref) => { this.rgl2 = ref; }}
                     onItemOut={(l, x, y) => {
                         this.checkItemPostion('rgl2', l, x, y);
                     }}
@@ -149,6 +164,6 @@ export default class BasicLayout extends React.PureComponent<any, any> {
     }
 }
 
-if (process.env.STATIC_EXAMPLES === true) {
+if (process.env.STATIC_EXAMPLES === 'true') {
     import('../test-hook').then(fn => fn.default(BasicLayout));
 }

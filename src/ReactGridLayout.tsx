@@ -730,6 +730,7 @@ class RGL extends React.Component<Props, State> {
                 rowHeight={rowHeight}
                 isDraggable={false}
                 isResizable={false}
+                isDroppingItem={false}
                 useCSSTransforms={useCSSTransforms}
                 transformScale={transformScale}
             >
@@ -743,10 +744,13 @@ class RGL extends React.Component<Props, State> {
    * @param  {Element} child React element.
    * @return {Element}       Element wrapped in draggable and properly placed.
    */
-    processGridItem(child: React.ReactElement<any>, isDroppingItem?: boolean): React.ReactElement<any> | null {
+    processGridItem(child: any, isDroppingItem?: boolean): React.ReactElement<any> | null {
         if (!child || !child.key) return null;
+        const { otherGridItemEntered } = this.props;
         const l = getLayoutItem(this.state.layout, String(child.key));
         if (!l) return null;
+        // 如果是外部拖入的组件
+        if (isDroppingItem && !otherGridItemEntered) return null;
         const {
             width,
             cols,
@@ -810,7 +814,7 @@ class RGL extends React.Component<Props, State> {
     }
 
     moveItem = (droppingItem, layerX, layerY, e) => {
-        const { layout } = this.state;
+        let { layout } = this.state;
         const {
             margin, containerPadding, width, cols, rowHeight,
         } = this.props;
@@ -818,37 +822,69 @@ class RGL extends React.Component<Props, State> {
             margin, containerPadding, width, cols, rowHeight,
         });
 
+        const placeholder = {
+            w: droppingItem.w,
+            h: droppingItem.h,
+            x,
+            y,
+            placeholder: true,
+            i: droppingItem.i,
+        };
+
         if (!this.state.droppingDOMNode) {
-            // @ts-ignore
+            layout = [
+                ...layout,
+                {
+                    ...droppingItem,
+                    x: 0,
+                    y: 0,
+                    static: false,
+                    isDraggable: true,
+                },
+            ];
             this.setState({
                 droppingDOMNode: <div key={droppingItem.i} />,
                 droppingPosition: {
                     x: layerX,
                     y: layerY,
                 },
-                layout: [
-                    ...layout,
-                    {
-                        ...droppingItem,
-                        x: 0,
-                        y: 0,
-                        static: false,
-                        isDraggable: true,
-                    },
-                ],
             });
         } else if (this.state.droppingPosition) {
             const shouldUpdatePosition = this.state.droppingPosition.x !== layerX
                 || this.state.droppingPosition.y !== layerY;
-            shouldUpdatePosition && this.setState({
-                droppingPosition: {
-                    x: layerX,
-                    y: layerY,
-                },
-            });
+            if (shouldUpdatePosition) {
+                const idx = getLayoutItemIndex(layout, droppingItem.i);
+                layout[idx] = {
+                    ...droppingItem,
+                    x,
+                    y,
+                    static: false,
+                    isDraggable: true,
+                };
+                this.setState({
+                    droppingPosition: {
+                        x: layerX,
+                        y: layerY,
+                    },
+                });
+            }
         }
-
-        this.onDrag(droppingItem.i, x, y, { e });
+        // Move the element to the dragged location.
+        const isUserAction = true;
+        layout = moveElement(
+            layout,
+            droppingItem,
+            x,
+            y,
+            isUserAction,
+            this.props.preventCollision,
+            compactType(this.props),
+            cols,
+        );
+        this.setState({
+            activeDrag: placeholder,
+            layout: compact(layout, compactType(this.props), cols),
+        });
     }
 
     onDragOver = (e: DragOverEvent) => {

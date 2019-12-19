@@ -29,6 +29,8 @@ export default function WidthProvider(
             measureBeforeMount: PropTypes.bool,
         };
 
+        rgl = null;
+
         state = {
             width: 1280,
         };
@@ -70,7 +72,7 @@ export default function WidthProvider(
 
             return (
                 <ComposedComponent
-                    ref={ref => this.rgl = ref}
+                    ref={(ref) => { this.rgl = ref; }}
                     {...rest}
                     {...this.state}
                 />
