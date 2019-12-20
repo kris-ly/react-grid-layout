@@ -13,6 +13,7 @@ import {
     getLayoutItemIndex,
     getOffset,
     calcXY,
+    isMouseIn,
     moveElement,
     synchronizeLayoutWithChildren,
     validateLayout,
@@ -31,7 +32,9 @@ import {
     DroppingPosition,
     LayoutItem,
 } from './utils';
-
+import {
+    emitItemOutEvent, bindItemOutEvent, emitItemDropEvent, bindItemDropEvent,
+} from './eventUtils';
 
 type State = {
     activeDrag: LayoutItem | null | undefined;
@@ -66,18 +69,13 @@ export type Props = {
     isDraggable: boolean;
     isResizable: boolean;
     isDroppable: boolean;
+    allowCrossGridDrag: boolean;
     preventCollision: boolean;
     useCSSTransforms: boolean;
     transformScale: number;
     droppingItem: Partial<LayoutItem>;
     // Callbacks
     onLayoutChange: (a: Layout, b: Position) => void;
-    onItemOut: (l: LayoutItem, clientX: number, clientY: number) => void;
-    otherGridItemDroppingPosition: {
-        x: number;
-        y: number;
-    };
-    otherGridItemEntered: boolean;
     onDrag: EventCallback;
     onDragStart: EventCallback;
     onDragStop: EventCallback;
@@ -194,19 +192,13 @@ class RGL extends React.Component<Props, State> {
         transformScale: PropTypes.number,
         // If true, an external element can trigger onDrop callback with a specific grid position as a parameter
         isDroppable: PropTypes.bool,
-
+        allowCrossGridDrag: PropTypes.bool,
         //
         // Callbacks
         //
 
         // Callback so you can save the layout. Calls after each drag & resize stops.
         onLayoutChange: PropTypes.func,
-        onItemOut: PropTypes.func,
-        otherGridItemEntered: PropTypes.bool,
-        otherGridItemDroppingPosition: PropTypes.shape({
-            x: PropTypes.number,
-            y: PropTypes.number,
-        }),
         // Calls when drag starts. Callback is of the signature (layout, oldItem, newItem, placeholder, e, ?node).
         // All callbacks below have the same signature. 'start' and 'stop' callbacks omit the 'placeholder'.
         onDragStart: PropTypes.func,
@@ -271,19 +263,18 @@ class RGL extends React.Component<Props, State> {
         isDraggable: true,
         isResizable: true,
         isDroppable: false,
+        allowCrossGridDrag: false,
         useCSSTransforms: true,
         transformScale: 1,
         verticalCompact: true,
         compactType: 'vertical',
         preventCollision: false,
-        otherGridItemEntered: false,
         droppingItem: {
             i: '__dropping-elem__',
             h: 1,
             w: 1,
         },
         onLayoutChange: noop,
-        onItemOut: noop,
         onDragStart: noop,
         onDrag: noop,
         onDragStop: noop,
@@ -317,7 +308,9 @@ class RGL extends React.Component<Props, State> {
 
     rglContainer: any = null;
 
-    onItemOut: any = noop;
+    ownItemOut: boolean = false;
+
+    otherItemIn: boolean = false;
 
     rglContainerPos: Position = {
         left: 0,
@@ -386,6 +379,34 @@ class RGL extends React.Component<Props, State> {
         // Possibly call back with layout on mount. This should be done after correcting the layout width
         // to ensure we don't rerender with the wrong width.
         this.onLayoutMaybeChanged(this.state.layout, this.props.layout, true);
+        if (!this.props.allowCrossGridDrag) return;
+        bindItemOutEvent((params) => {
+            if (this.ownItemOut) return;
+            const { item, clientX, clientY } = params;
+            const { droppingItem } = this.props;
+            if (isMouseIn(clientX, clientY, this.rglContainerPos)) {
+                const newDroppingItem = {
+                    i: droppingItem.i,
+                    w: item.w,
+                    h: item.h,
+                };
+                const { left, top } = this.rglContainerPos;
+                this.otherItemIn = true;
+                this.moveItem(newDroppingItem, clientX - left, clientY - top);
+                return;
+            }
+            if (this.otherItemIn) {
+                this.removeDroppingPlaceholder();
+                this.otherItemIn = false;
+            }
+        });
+
+        bindItemDropEvent((params) => {
+            if (this.ownItemOut) return;
+            if (this.state.activeDrag) {
+                this.removeDroppingPlaceholder();
+            }
+        });
     }
 
     componentDidUpdate(prevProps: Props, prevState: State) {
@@ -471,7 +492,7 @@ class RGL extends React.Component<Props, State> {
     }: GridDragEvent) {
         const { oldDragItem } = this.state;
         let { layout } = this.state;
-        const { cols } = this.props;
+        const { cols, allowCrossGridDrag } = this.props;
         const l = getLayoutItem(layout, i);
         if (!l) return;
 
@@ -488,11 +509,20 @@ class RGL extends React.Component<Props, State> {
             x, y, w: l.w, h: l.h,
         })) {
             const { clientX, clientY } = e as any;
-            this.props.onItemOut(l, clientX, clientY);
+            this.ownItemOut = true;
+            if (allowCrossGridDrag) {
+                emitItemOutEvent({ // 组件移出
+                    item: l,
+                    clientX,
+                    clientY,
+                });
+            }
+
             this.setState({
                 activeDrag: null,
             });
         } else {
+            this.ownItemOut = false;
             this.setState({
                 activeDrag: placeholder,
             });
@@ -532,15 +562,13 @@ class RGL extends React.Component<Props, State> {
     }: GridDragEvent) {
         const { oldDragItem } = this.state;
         let { layout } = this.state;
-        const { cols, preventCollision } = this.props;
+        const { cols, preventCollision, allowCrossGridDrag } = this.props;
         const l = getLayoutItem(layout, i);
         if (!l) return;
         if (outOfBoundary(cols, bottom(layout), {
             x, y, w: l.w, h: l.h,
         })) {
-            console.log('onDragStop outOfBoundary');
             const idx = getLayoutItemIndex(layout, i);
-
             layout.splice(idx, 1);
         } else {
             // Move the element here
@@ -555,6 +583,10 @@ class RGL extends React.Component<Props, State> {
                 compactType(this.props),
                 cols,
             );
+        }
+
+        if (allowCrossGridDrag) {
+            emitItemDropEvent({ l, x, y });
         }
 
         if (this.state.activeDrag) {
@@ -746,11 +778,10 @@ class RGL extends React.Component<Props, State> {
    */
     processGridItem(child: any, isDroppingItem?: boolean): React.ReactElement<any> | null {
         if (!child || !child.key) return null;
-        const { otherGridItemEntered } = this.props;
         const l = getLayoutItem(this.state.layout, String(child.key));
         if (!l) return null;
         // 如果是外部拖入的组件
-        if (isDroppingItem && !otherGridItemEntered) return null;
+        if (isDroppingItem && !this.otherItemIn) return null;
         const {
             width,
             cols,
@@ -813,7 +844,7 @@ class RGL extends React.Component<Props, State> {
         );
     }
 
-    moveItem = (droppingItem, layerX, layerY, e) => {
+    moveItem = (droppingItem, layerX, layerY) => {
         let { layout } = this.state;
         const {
             margin, containerPadding, width, cols, rowHeight,
@@ -902,7 +933,7 @@ class RGL extends React.Component<Props, State> {
         } = this.props;
         const { layerX, layerY } = e.nativeEvent;
 
-        this.moveItem(droppingItem, layerX, layerY, e);
+        this.moveItem(droppingItem, layerX, layerY);
 
         e.stopPropagation();
         e.preventDefault();
@@ -911,6 +942,9 @@ class RGL extends React.Component<Props, State> {
     removeDroppingPlaceholder = () => {
         const { droppingItem, cols } = this.props;
         const { layout } = this.state;
+
+        console.log('remove');
+
 
         const newLayout = compact(
             layout.filter(l => l.i !== droppingItem.i),
@@ -955,7 +989,6 @@ class RGL extends React.Component<Props, State> {
 
         // reset gragEnter counter on drop
         this.dragEnterCounter = 0;
-
         this.removeDroppingPlaceholder();
         this.props.onDrop({
             // @ts-ignore
