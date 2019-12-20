@@ -85,6 +85,8 @@ export type Props = {
     onResize: EventCallback;
     onResizeStart: EventCallback;
     onResizeStop: EventCallback;
+    onOtherItemIn: any;
+    onOtherItemDrop: any;
     onDrop: (
         itemPosition: {
             x: number;
@@ -216,6 +218,8 @@ class RGL extends React.Component<Props, State> {
         onDrop: PropTypes.func,
         onDragNewItemEnter: PropTypes.func,
         onDragNewItemLeave: PropTypes.func,
+        onOtherItemIn: PropTypes.func,
+        onOtherItemDrop: PropTypes.func,
         dragEnterChild: PropTypes.bool,
         //
         // Other validations
@@ -280,6 +284,8 @@ class RGL extends React.Component<Props, State> {
         onDragStop: noop,
         onDragNewItemEnter: noop,
         onDragNewItemLeave: noop,
+        onOtherItemIn: noop,
+        onOtherItemDrop: noop,
         dragEnterChild: false,
         onResizeStart: noop,
         onResize: noop,
@@ -393,6 +399,7 @@ class RGL extends React.Component<Props, State> {
                 const { left, top } = this.rglContainerPos;
                 this.otherItemIn = true;
                 this.moveItem(newDroppingItem, clientX - left, clientY - top);
+                this.props.onOtherItemIn(item, clientX, clientY);
                 return;
             }
             if (this.otherItemIn) {
@@ -402,7 +409,9 @@ class RGL extends React.Component<Props, State> {
         });
 
         bindItemDropEvent((params) => {
+            const { item, clientX, clientY } = params;
             if (this.ownItemOut) return;
+            this.props.onOtherItemDrop(item, clientX, clientY);
             if (this.state.activeDrag) {
                 this.removeDroppingPlaceholder();
             }

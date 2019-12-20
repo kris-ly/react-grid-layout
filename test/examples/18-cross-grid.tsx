@@ -68,6 +68,8 @@ export default class BasicLayout extends React.PureComponent<any, any> {
                     droppingItem={droppingItem}
                     style={{ border: '1px solid #333' }}
                     allowCrossGridDrag
+                    onOtherItemIn={(p) => { console.log('onOtherItemIn'); }}
+                    onOtherItemDrop={(p) => { console.log('onOtherItemDrop'); }}
                     draggableHandle=".drag-layout-handle-area"
                     isDroppable
                     {...this.props}
