@@ -821,12 +821,14 @@ class RGL extends React.Component<Props, State> {
         } = this.props;
         const { mounted, droppingPosition } = this.state;
 
+        const config = child.props['data-config'] || {};
+
         // Parse 'static'. Any properties defined directly on the grid item will take precedence.
         const draggable = Boolean(
-            !l.static && isDraggable && (l.isDraggable || l.isDraggable == null),
+            !config.static && !l.static && isDraggable && (l.isDraggable || l.isDraggable == null),
         );
         const resizable = Boolean(
-            !l.static && isResizable && (l.isResizable || l.isResizable == null),
+            !config.static && !l.static && isResizable && (l.isResizable || l.isResizable == null),
         );
         return (
             // @ts-ignore

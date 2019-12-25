@@ -24,10 +24,10 @@ export default class BasicLayout extends React.PureComponent {
         };
     }
 
-    generateDOM() {
-        return _.map(_.range(this.props.items), (i) => {
-            if (i === 0) {
-                const layout = [
+    generateDOM(layout) {
+        return layout.map((item) => {
+            if (item.i === '0') {
+                const innerLayout = [
                     {
                         i: 'a', x: 0, y: 0, w: 1, h: 4,
                     },
@@ -39,10 +39,12 @@ export default class BasicLayout extends React.PureComponent {
                     },
                 ];
                 return (
-                    <div key={i}>
-                        <div className="drag-layout-handle-area">drag</div>
+                    <div
+                        key={item.i}
+                        data-config={{ static: true }}
+                    >
                         <ReactGridLayout
-                            layout={layout}
+                            layout={innerLayout}
                             droppingItem={{ w: 2, h: 4, i: '21' }}
                             isDroppable
                             onDragNewItemEnter={() => {
@@ -57,6 +59,7 @@ export default class BasicLayout extends React.PureComponent {
                                     dragEnterChild: false,
                                 });
                             }}
+                            allowCrossGridDrag
                             onDrop={() => {
                                 console.log('onDrop');
                                 this.setState({
@@ -64,13 +67,11 @@ export default class BasicLayout extends React.PureComponent {
                                 });
                             }}
                             style={{ border: '1px solid #333' }}
-                            draggableHandle=".drag-layout-handle"
                             cols={12}
                             rowHeight={30}
                         >
-                            {layout.map((item, j) => (
-                                <div key={item.i}>
-                                    <div className="drag-layout-handle">drag</div>
+                            {innerLayout.map((innerItem, j) => (
+                                <div key={innerItem.i}>
                                     <span className="text">{j}</span>
                                 </div>
                             ))}
@@ -79,9 +80,8 @@ export default class BasicLayout extends React.PureComponent {
                 );
             }
             return (
-                <div key={i}>
-                    <div className="drag-layout-handle-area">drag</div>
-                    <span className="text">{i}</span>
+                <div key={item.i}>
+                    <span className="text">{item.i}</span>
                 </div>
             );
         });
@@ -133,12 +133,17 @@ export default class BasicLayout extends React.PureComponent {
                     dragEnterChild={dragEnterChild}
                     droppingItem={{ w: 2, h: 4, i: '21' }}
                     style={{ border: '1px solid #333' }}
-                    draggableHandle=".drag-layout-handle-area"
                     onLayoutChange={this.onLayoutChange}
+                    allowCrossGridDrag
+                    onOtherItemDrop={(rglKey, newLayout, item) => {
+                        this.setState({
+                            layout: newLayout,
+                        });
+                    }}
                     isDroppable
                     {...this.props}
                 >
-                    {this.generateDOM()}
+                    {this.generateDOM(layout)}
                 </ReactGridLayout>
 
             </div>
