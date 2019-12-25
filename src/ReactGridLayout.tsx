@@ -59,6 +59,7 @@ export type Props = {
     cols: number;
     draggableCancel: string;
     draggableHandle: string;
+    rglKey: string;
     verticalCompact: boolean;
     compactType: CompactType;
     layout: Layout;
@@ -87,6 +88,7 @@ export type Props = {
     onResizeStop: EventCallback;
     onOtherItemIn: any;
     onOtherItemDrop: any;
+    onItemDropOut: any;
     onDrop: (
         itemPosition: {
             x: number;
@@ -138,6 +140,8 @@ class RGL extends React.Component<Props, State> {
         draggableCancel: PropTypes.string,
         // A selector for the draggable handler
         draggableHandle: PropTypes.string,
+
+        rglKey: PropTypes.string,
 
         // Deprecated
         verticalCompact(props: Props) {
@@ -220,6 +224,7 @@ class RGL extends React.Component<Props, State> {
         onDragNewItemLeave: PropTypes.func,
         onOtherItemIn: PropTypes.func,
         onOtherItemDrop: PropTypes.func,
+        onItemDropOut: PropTypes.func,
         dragEnterChild: PropTypes.bool,
         //
         // Other validations
@@ -259,6 +264,7 @@ class RGL extends React.Component<Props, State> {
         style: {},
         draggableHandle: '',
         draggableCancel: '',
+        rglKey: '',
         containerPadding: null,
         rowHeight: 150,
         maxRows: Infinity, // infinite vertical growth
@@ -286,6 +292,7 @@ class RGL extends React.Component<Props, State> {
         onDragNewItemLeave: noop,
         onOtherItemIn: noop,
         onOtherItemDrop: noop,
+        onItemDropOut: noop,
         dragEnterChild: false,
         onResizeStart: noop,
         onResize: noop,
@@ -340,9 +347,9 @@ class RGL extends React.Component<Props, State> {
     static getDerivedStateFromProps(nextProps: Props, prevState: State) {
         let newLayoutBase;
 
-        if (prevState.activeDrag) {
-            return null;
-        }
+        // if (prevState.activeDrag) {
+        //     return null;
+        // }
 
         // Legacy support for compactType
         // Allow parent to set layout directly.
@@ -389,7 +396,7 @@ class RGL extends React.Component<Props, State> {
         bindItemOutEvent((params) => {
             if (this.ownItemOut) return;
             const { item, clientX, clientY } = params;
-            const { droppingItem } = this.props;
+            const { droppingItem, rglKey } = this.props;
             if (isMouseIn(clientX, clientY, this.rglContainerPos)) {
                 const newDroppingItem = {
                     i: droppingItem.i,
@@ -399,7 +406,7 @@ class RGL extends React.Component<Props, State> {
                 const { left, top } = this.rglContainerPos;
                 this.otherItemIn = true;
                 this.moveItem(newDroppingItem, clientX - left, clientY - top);
-                this.props.onOtherItemIn(item, clientX, clientY);
+                this.props.onOtherItemIn(rglKey, item, clientX, clientY);
                 return;
             }
             if (this.otherItemIn) {
@@ -408,12 +415,12 @@ class RGL extends React.Component<Props, State> {
             }
         });
 
-        bindItemDropEvent((params) => {
-            const { item, clientX, clientY } = params;
+        bindItemDropEvent(({ rglKey, item }) => {
             if (this.ownItemOut) return;
-            this.props.onOtherItemDrop(item, clientX, clientY);
+            const { layout } = this.state;
+            this.props.onOtherItemDrop(rglKey, layout, item);
             if (this.state.activeDrag) {
-                this.removeDroppingPlaceholder();
+                this.removeDroppingPlaceholder(true);
             }
         });
     }
@@ -571,7 +578,9 @@ class RGL extends React.Component<Props, State> {
     }: GridDragEvent) {
         const { oldDragItem } = this.state;
         let { layout } = this.state;
-        const { cols, preventCollision, allowCrossGridDrag } = this.props;
+        const {
+            cols, preventCollision, allowCrossGridDrag, onItemDropOut, rglKey,
+        } = this.props;
         const l = getLayoutItem(layout, i);
         if (!l) return;
         if (outOfBoundary(cols, bottom(layout), {
@@ -594,10 +603,6 @@ class RGL extends React.Component<Props, State> {
             );
         }
 
-        if (allowCrossGridDrag) {
-            emitItemDropEvent({ l, x, y });
-        }
-
         if (this.state.activeDrag) {
             this.props.onDragStop(layout, oldDragItem, l, null, e, node);
         }
@@ -605,13 +610,21 @@ class RGL extends React.Component<Props, State> {
         // Set state
         const newLayout = compact(layout, compactType(this.props), cols);
         const { oldLayout } = this.state;
+        if (this.ownItemOut) {
+            onItemDropOut(oldLayout, newLayout, l);
+            if (allowCrossGridDrag) {
+                emitItemDropEvent({
+                    rglKey,
+                    item: l,
+                });
+            }
+        }
         this.setState({
             activeDrag: null,
             layout: newLayout,
             oldDragItem: null,
             oldLayout: null,
         });
-
         this.onLayoutMaybeChanged(newLayout, oldLayout);
     }
 
@@ -787,6 +800,7 @@ class RGL extends React.Component<Props, State> {
    */
     processGridItem(child: any, isDroppingItem?: boolean): React.ReactElement<any> | null {
         if (!child || !child.key) return null;
+
         const l = getLayoutItem(this.state.layout, String(child.key));
         if (!l) return null;
         // 如果是外部拖入的组件
@@ -948,13 +962,17 @@ class RGL extends React.Component<Props, State> {
         e.preventDefault();
     };
 
-    removeDroppingPlaceholder = () => {
+    removeDroppingPlaceholder = (dontCangeLayout = false) => {
+        if (dontCangeLayout) {
+            this.setState({
+                droppingDOMNode: null,
+                activeDrag: null,
+                droppingPosition: undefined,
+            });
+            return;
+        }
         const { droppingItem, cols } = this.props;
         const { layout } = this.state;
-
-        console.log('remove');
-
-
         const newLayout = compact(
             layout.filter(l => l.i !== droppingItem.i),
             compactType(this.props),
@@ -1009,7 +1027,6 @@ class RGL extends React.Component<Props, State> {
         const {
             className, style, isDroppable,
         } = this.props;
-
         const mergedClassName = classNames(layoutClassName, className);
         const mergedStyle = {
             height: this.containerHeight(),

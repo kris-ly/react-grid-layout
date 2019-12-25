@@ -17,21 +17,23 @@ export default class BasicLayout extends React.PureComponent<any, any> {
     constructor(props) {
         super(props);
 
-        const layout = this.generateLayout();
+        const layout1 = this.generateLayout();
+        const layout2 = this.generateLayout();
         this.state = {
-            layout,
+            layout1,
+            layout2,
             droppingItem: { w: 2, h: 4, i: '21' },
         };
     }
 
-    generateDOM() {
-        return _.map(_.range(this.props.items), i => (
-            <div key={i}>
+    generateDOM = items => (
+        items.map(item => (
+            <div key={item.i}>
                 <div className="drag-layout-handle-area">drag</div>
-                <span className="text">{i}</span>
+                <span className="text">{item.i}</span>
             </div>
-        ));
-    }
+        ))
+    )
 
     generateLayout() {
         const p = this.props;
@@ -50,8 +52,9 @@ export default class BasicLayout extends React.PureComponent<any, any> {
 
     render() {
         const {
-            layout, droppingItem,
+            layout1, layout2, droppingItem,
         } = this.state;
+
 
         return (
             <div>
@@ -64,28 +67,43 @@ export default class BasicLayout extends React.PureComponent<any, any> {
                     draggerble element
                 </div>
                 <ReactGridLayout
-                    layout={layout}
+                    layout={layout1}
                     droppingItem={droppingItem}
+                    rglKey="layout1"
                     style={{ border: '1px solid #333' }}
                     allowCrossGridDrag
                     onOtherItemIn={(p) => { console.log('onOtherItemIn'); }}
-                    onOtherItemDrop={(p) => { console.log('onOtherItemDrop'); }}
+                    onOtherItemDrop={(rglKey, layout, item) => {
+                        this.setState({
+                            layout1: layout,
+                        });
+                    }}
                     draggableHandle=".drag-layout-handle-area"
                     isDroppable
                     {...this.props}
                 >
-                    {this.generateDOM()}
+                    {this.generateDOM(layout1)}
                 </ReactGridLayout>
                 <ReactGridLayout
-                    layout={layout}
+                    layout={layout2}
                     droppingItem={droppingItem}
+                    style={{ border: '1px solid #333', marginTop: 100 }}
+                    rglKey="layout2"
                     allowCrossGridDrag
-                    style={{ border: '1px solid #333' }}
+                    onOtherItemIn={(p) => { console.log('onOtherItemIn'); }}
+                    onOtherItemDrop={(rglKey, layout, item) => {
+                        this.setState({
+                            layout2: layout,
+                        });
+                    }}
                     draggableHandle=".drag-layout-handle-area"
+                    onItemDropOut={(oldLayout, newLayout, item) => {
+                        console.log('item', oldLayout, newLayout, item);
+                    }}
                     isDroppable
                     {...this.props}
                 >
-                    {this.generateDOM()}
+                    {this.generateDOM(layout2)}
                 </ReactGridLayout>
             </div>
         );
