@@ -25,7 +25,6 @@ var __assign = (this && this.__assign) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
-var ReactDOM = require("react-dom");
 var PropTypes = require("prop-types");
 var react_draggable_1 = require("react-draggable");
 var react_resizable_1 = require("react-resizable");
@@ -149,40 +148,6 @@ var GridItem = /** @class */ (function (_super) {
         };
         return _this;
     }
-    GridItem.prototype.componentDidUpdate = function (prevProps) {
-        if (this.props.droppingPosition && prevProps.droppingPosition) {
-            this.moveDroppingItem(prevProps);
-        }
-    };
-    GridItem.prototype.moveDroppingItem = function (prevProps) {
-        var droppingPosition = this.props.droppingPosition;
-        var dragging = this.state.dragging;
-        if (!droppingPosition || !prevProps.droppingPosition) {
-            return;
-        }
-        if (!this.currentNode) {
-            // eslint-disable-next-line react/no-find-dom-node
-            this.currentNode = ReactDOM.findDOMNode(this);
-        }
-        var shouldDrag = (dragging && droppingPosition.x !== prevProps.droppingPosition.x)
-            || droppingPosition.y !== prevProps.droppingPosition.y;
-        if (!dragging) {
-            this.onDragStart(droppingPosition.e, {
-                node: this.currentNode,
-                deltaX: droppingPosition.x,
-                deltaY: droppingPosition.y,
-            });
-        }
-        else if (shouldDrag) {
-            var deltaX = droppingPosition.x - dragging.left;
-            var deltaY = droppingPosition.y - dragging.top;
-            this.onDrag(droppingPosition.e, {
-                node: this.currentNode,
-                deltaX: deltaX,
-                deltaY: deltaY,
-            });
-        }
-    };
     // Helper for generating column width
     GridItem.prototype.calcColWidth = function () {
         var _a = this.props, margin = _a.margin, containerPadding = _a.containerPadding, containerWidth = _a.containerWidth, cols = _a.cols;
@@ -198,7 +163,7 @@ var GridItem = /** @class */ (function (_super) {
    * @return {Object}                Object containing coords.
    */
     GridItem.prototype.calcPosition = function (x, y, w, h, state) {
-        var _a = this.props, margin = _a.margin, containerPadding = _a.containerPadding, rowHeight = _a.rowHeight;
+        var _a = this.props, margin = _a.margin, containerPadding = _a.containerPadding, rowHeight = _a.rowHeight, isDroppingItem = _a.isDroppingItem;
         var colWidth = this.calcColWidth();
         var out = {};
         // If resizing, use the exact width and height as returned from resizing callbacks.
@@ -206,8 +171,7 @@ var GridItem = /** @class */ (function (_super) {
             out.width = Math.round(state.resizing.width);
             out.height = Math.round(state.resizing.height);
         }
-        // Otherwise, calculate from grid units.
-        else {
+        else { // Otherwise, calculate from grid units.
             // 0 * Infinity === NaN, which causes problems with resize constraints;
             // Fix this if it occurs.
             // Note we do it here rather than later because Math.round(Infinity) causes deopt
@@ -223,8 +187,11 @@ var GridItem = /** @class */ (function (_super) {
             out.top = Math.round(state.dragging.top);
             out.left = Math.round(state.dragging.left);
         }
-        // Otherwise, calculate from grid units.
-        else {
+        else if (isDroppingItem) {
+            out.top = Math.round(y);
+            out.left = Math.round(x);
+        }
+        else { // Otherwise, calculate from grid units.
             out.top = Math.round((rowHeight + margin[1]) * y + containerPadding[1]);
             out.left = Math.round((colWidth + margin[0]) * x + containerPadding[0]);
         }
@@ -249,8 +216,8 @@ var GridItem = /** @class */ (function (_super) {
         var x = Math.round((left - margin[0]) / (colWidth + margin[0]));
         var y = Math.round((top - margin[1]) / (rowHeight + margin[1]));
         // Capping
-        x = Math.max(Math.min(x, cols - w), 0);
-        y = Math.max(Math.min(y, maxRows - h), 0);
+        // x = Math.max(Math.min(x, cols - w), 0);
+        // y = Math.max(Math.min(y, maxRows - h), 0);
         return { x: x, y: y };
     };
     /**
@@ -358,7 +325,7 @@ var GridItem = /** @class */ (function (_super) {
         handler.call(this, i, w, h, { e: e, node: node, size: size });
     };
     GridItem.prototype.render = function () {
-        var _a = this.props, x = _a.x, y = _a.y, w = _a.w, h = _a.h, isDraggable = _a.isDraggable, isResizable = _a.isResizable, droppingPosition = _a.droppingPosition, useCSSTransforms = _a.useCSSTransforms;
+        var _a = this.props, x = _a.x, y = _a.y, w = _a.w, h = _a.h, isDraggable = _a.isDraggable, isDroppingItem = _a.isDroppingItem, isResizable = _a.isResizable, useCSSTransforms = _a.useCSSTransforms;
         var pos = this.calcPosition(x, y, w, h, this.state);
         var child = React.Children.only(this.props.children);
         // Create the child element. We clone the existing element but modify its className and style.
@@ -368,7 +335,7 @@ var GridItem = /** @class */ (function (_super) {
                 resizing: Boolean(this.state.resizing),
                 'react-draggable': isDraggable,
                 'react-draggable-dragging': Boolean(this.state.dragging),
-                dropping: Boolean(droppingPosition),
+                dropping: isDroppingItem,
                 cssTransforms: useCSSTransforms,
             }),
             // We can set the width and height on the child, but unfortunately we can't set the position.
@@ -453,11 +420,7 @@ var GridItem = /** @class */ (function (_super) {
         // Selector for draggable cancel (see react-draggable)
         cancel: PropTypes.string,
         // Current position of a dropping element
-        droppingPosition: PropTypes.shape({
-            e: PropTypes.object.isRequired,
-            x: PropTypes.number.isRequired,
-            y: PropTypes.number.isRequired,
-        }),
+        isDroppingItem: PropTypes.bool.isRequired,
     };
     GridItem.defaultProps = {
         className: '',

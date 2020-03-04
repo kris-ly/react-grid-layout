@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
-import isEqual from 'lodash.isequal';
+import * as isEqual from 'lodash.isequal';
 
 import {
     cloneLayout,
@@ -116,7 +116,7 @@ export default class ResponsiveReactGridLayout extends React.Component<
             if (type(props[propName]) !== '[object Object]') {
                 throw new Error(
                     `Layout property must be an object. Received: ${
-           type(props[propName])}`,
+                        type(props[propName])}`,
                 );
             }
             Object.keys(props[propName]).forEach((key) => {
@@ -125,7 +125,7 @@ export default class ResponsiveReactGridLayout extends React.Component<
                         'Each key in layouts must align with a key in breakpoints.',
                     );
                 }
-                validateLayout(props.layouts[key], `layouts.${  key}`);
+                validateLayout(props.layouts[key], `layouts.${key}`);
             });
         },
 

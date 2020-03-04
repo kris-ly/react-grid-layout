@@ -37,6 +37,7 @@ var lodash_1 = require("lodash");
 var classNames = require("classnames");
 var utils_1 = require("./utils");
 var GridItem_1 = require("./GridItem");
+var eventUtils_1 = require("./eventUtils");
 // End Types
 var compactType = function (props) {
     var _a = props || {}, verticalCompact = _a.verticalCompact, compactType = _a.compactType;
@@ -64,6 +65,64 @@ var RGL = /** @class */ (function (_super) {
             children: [],
         };
         _this.dragEnterCounter = 0;
+        _this.rglContainer = null;
+        _this.ownItemOut = false;
+        _this.otherItemIn = false;
+        _this.rglContainerPos = {
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0,
+        };
+        _this.moveItem = function (droppingItem, layerX, layerY) {
+            var layout = _this.state.layout;
+            var _a = _this.props, margin = _a.margin, containerPadding = _a.containerPadding, width = _a.width, cols = _a.cols, rowHeight = _a.rowHeight;
+            var _b = utils_1.calcXY(layerY, layerX, {
+                margin: margin, containerPadding: containerPadding, width: width, cols: cols, rowHeight: rowHeight,
+            }), x = _b.x, y = _b.y;
+            var placeholder = {
+                w: droppingItem.w,
+                h: droppingItem.h,
+                x: x,
+                y: y,
+                placeholder: true,
+                i: droppingItem.i,
+            };
+            if (!_this.state.droppingDOMNode) {
+                layout = __spreadArrays(layout, [
+                    __assign(__assign({}, droppingItem), { x: 0, y: 0, static: false, isDraggable: true }),
+                ]);
+                _this.setState({
+                    droppingDOMNode: React.createElement("div", { key: droppingItem.i }),
+                    droppingPosition: {
+                        x: layerX,
+                        y: layerY,
+                    },
+                });
+            }
+            else if (_this.state.droppingPosition) {
+                var shouldUpdatePosition = _this.state.droppingPosition.x !== layerX
+                    || _this.state.droppingPosition.y !== layerY;
+                if (shouldUpdatePosition) {
+                    var idx = utils_1.getLayoutItemIndex(layout, droppingItem.i);
+                    layout[idx] = __assign(__assign({}, droppingItem), { x: x,
+                        y: y, static: false, isDraggable: true });
+                    _this.setState({
+                        droppingPosition: {
+                            x: layerX,
+                            y: layerY,
+                        },
+                    });
+                }
+            }
+            // Move the element to the dragged location.
+            var isUserAction = true;
+            layout = utils_1.moveElement(layout, droppingItem, x, y, isUserAction, _this.props.preventCollision, compactType(_this.props), cols);
+            _this.setState({
+                activeDrag: placeholder,
+                layout: utils_1.compact(layout, compactType(_this.props), cols),
+            });
+        };
         _this.onDragOver = function (e) {
             // we should ignore events from layout's children in Firefox
             // to avoid unpredictable jumping of a dropping placeholder
@@ -72,28 +131,21 @@ var RGL = /** @class */ (function (_super) {
                 return false;
             }
             var droppingItem = _this.props.droppingItem;
-            var layout = _this.state.layout;
             var _a = e.nativeEvent, layerX = _a.layerX, layerY = _a.layerY;
-            var droppingPosition = { x: layerX, y: layerY, e: e };
-            if (!_this.state.droppingDOMNode) {
-                // @ts-ignore
-                _this.setState({
-                    droppingDOMNode: React.createElement("div", { key: droppingItem.i }),
-                    droppingPosition: droppingPosition,
-                    layout: __spreadArrays(layout, [
-                        __assign(__assign({}, droppingItem), { x: 0, y: 0, static: false, isDraggable: true }),
-                    ]),
-                });
-            }
-            else if (_this.state.droppingPosition) {
-                var shouldUpdatePosition = _this.state.droppingPosition.x != layerX
-                    || _this.state.droppingPosition.y != layerY;
-                shouldUpdatePosition && _this.setState({ droppingPosition: droppingPosition });
-            }
+            _this.moveItem(droppingItem, layerX, layerY);
             e.stopPropagation();
             e.preventDefault();
         };
-        _this.removeDroppingPlaceholder = function () {
+        _this.removeDroppingPlaceholder = function (dontCangeLayout) {
+            if (dontCangeLayout === void 0) { dontCangeLayout = false; }
+            if (dontCangeLayout) {
+                _this.setState({
+                    droppingDOMNode: null,
+                    activeDrag: null,
+                    droppingPosition: undefined,
+                });
+                return;
+            }
             var _a = _this.props, droppingItem = _a.droppingItem, cols = _a.cols;
             var layout = _this.state.layout;
             var newLayout = utils_1.compact(layout.filter(function (l) { return l.i !== droppingItem.i; }), compactType(_this.props), cols);
@@ -146,9 +198,9 @@ var RGL = /** @class */ (function (_super) {
     }
     RGL.getDerivedStateFromProps = function (nextProps, prevState) {
         var newLayoutBase;
-        if (prevState.activeDrag) {
-            return null;
-        }
+        // if (prevState.activeDrag) {
+        //     return null;
+        // }
         // Legacy support for compactType
         // Allow parent to set layout directly.
         if (!lodash_1.isEqual(nextProps.layout, prevState.propsLayout)
@@ -176,10 +228,45 @@ var RGL = /** @class */ (function (_super) {
         return null;
     };
     RGL.prototype.componentDidMount = function () {
+        var _this = this;
         this.setState({ mounted: true });
         // Possibly call back with layout on mount. This should be done after correcting the layout width
         // to ensure we don't rerender with the wrong width.
-        this.onLayoutMaybeChanged(this.state.layout, this.props.layout);
+        this.onLayoutMaybeChanged(this.state.layout, this.props.layout, true);
+        if (!this.props.allowCrossGridDrag)
+            return;
+        eventUtils_1.bindItemOutEvent(function (params) {
+            if (_this.ownItemOut)
+                return;
+            var item = params.item, clientX = params.clientX, clientY = params.clientY;
+            var _a = _this.props, droppingItem = _a.droppingItem, rglKey = _a.rglKey;
+            if (utils_1.isMouseIn(clientX, clientY, _this.rglContainerPos)) {
+                var newDroppingItem = {
+                    i: droppingItem.i,
+                    w: item.w,
+                    h: item.h,
+                };
+                var _b = _this.rglContainerPos, left = _b.left, top_1 = _b.top;
+                _this.otherItemIn = true;
+                _this.moveItem(newDroppingItem, clientX - left, clientY - top_1);
+                _this.props.onOtherItemIn(rglKey, item, clientX, clientY);
+                return;
+            }
+            if (_this.otherItemIn) {
+                _this.removeDroppingPlaceholder();
+                _this.otherItemIn = false;
+            }
+        });
+        eventUtils_1.bindItemDropEvent(function (_a) {
+            var rglKey = _a.rglKey, item = _a.item;
+            if (_this.ownItemOut)
+                return;
+            var layout = _this.state.layout;
+            _this.props.onOtherItemDrop(rglKey, layout, item);
+            if (_this.state.activeDrag) {
+                _this.removeDroppingPlaceholder(true);
+            }
+        });
     };
     RGL.prototype.componentDidUpdate = function (prevProps, prevState) {
         if (!this.state.activeDrag) {
@@ -202,6 +289,14 @@ var RGL = /** @class */ (function (_super) {
         return (nbRow * this.props.rowHeight
             + (nbRow - 1) * this.props.margin[1]
             + containerPaddingY * 2 + "px");
+    };
+    RGL.prototype.calcXY = function (top, left) {
+        var _a = this.props, margin = _a.margin, cols = _a.cols, rowHeight = _a.rowHeight, containerPadding = _a.containerPadding, width = _a.width;
+        var padding = containerPadding || margin;
+        var colWidth = (width - margin[0] * (cols - 1) - padding[0] * 2) / cols;
+        var x = Math.round((left - margin[0]) / (colWidth + margin[0]));
+        var y = Math.round((top - margin[1]) / (rowHeight + margin[1]));
+        return { x: x, y: y };
     };
     /**
    * When dragging starts
@@ -235,7 +330,7 @@ var RGL = /** @class */ (function (_super) {
         var e = _a.e, node = _a.node;
         var oldDragItem = this.state.oldDragItem;
         var layout = this.state.layout;
-        var cols = this.props.cols;
+        var _b = this.props, cols = _b.cols, allowCrossGridDrag = _b.allowCrossGridDrag;
         var l = utils_1.getLayoutItem(layout, i);
         if (!l)
             return;
@@ -243,18 +338,39 @@ var RGL = /** @class */ (function (_super) {
         var placeholder = {
             w: l.w,
             h: l.h,
-            x: l.x,
-            y: l.y,
+            x: x,
+            y: y,
             placeholder: true,
             i: i,
         };
+        if (utils_1.outOfBoundary(cols, utils_1.bottom(layout), {
+            x: x, y: y, w: l.w, h: l.h,
+        })) {
+            var _c = e, clientX = _c.clientX, clientY = _c.clientY;
+            this.ownItemOut = true;
+            if (allowCrossGridDrag) {
+                eventUtils_1.emitItemOutEvent({
+                    item: l,
+                    clientX: clientX,
+                    clientY: clientY,
+                });
+            }
+            this.setState({
+                activeDrag: null,
+            });
+        }
+        else {
+            this.ownItemOut = false;
+            this.setState({
+                activeDrag: placeholder,
+            });
+        }
         // Move the element to the dragged location.
         var isUserAction = true;
         layout = utils_1.moveElement(layout, l, x, y, isUserAction, this.props.preventCollision, compactType(this.props), cols);
         this.props.onDrag(layout, oldDragItem, l, placeholder, e, node);
         this.setState({
             layout: utils_1.compact(layout, compactType(this.props), cols),
-            activeDrag: placeholder,
         });
     };
     /**
@@ -269,19 +385,36 @@ var RGL = /** @class */ (function (_super) {
         var e = _a.e, node = _a.node;
         var oldDragItem = this.state.oldDragItem;
         var layout = this.state.layout;
-        var _b = this.props, cols = _b.cols, preventCollision = _b.preventCollision;
+        var _b = this.props, cols = _b.cols, preventCollision = _b.preventCollision, allowCrossGridDrag = _b.allowCrossGridDrag, onItemDropOut = _b.onItemDropOut, rglKey = _b.rglKey;
         var l = utils_1.getLayoutItem(layout, i);
         if (!l)
             return;
-        // Move the element here
-        var isUserAction = true;
-        layout = utils_1.moveElement(layout, l, x, y, isUserAction, preventCollision, compactType(this.props), cols);
+        if (utils_1.outOfBoundary(cols, utils_1.bottom(layout), {
+            x: x, y: y, w: l.w, h: l.h,
+        })) {
+            var idx = utils_1.getLayoutItemIndex(layout, i);
+            layout.splice(idx, 1);
+        }
+        else {
+            // Move the element here
+            var isUserAction = true;
+            layout = utils_1.moveElement(layout, l, x, y, isUserAction, preventCollision, compactType(this.props), cols);
+        }
         if (this.state.activeDrag) {
             this.props.onDragStop(layout, oldDragItem, l, null, e, node);
         }
         // Set state
         var newLayout = utils_1.compact(layout, compactType(this.props), cols);
         var oldLayout = this.state.oldLayout;
+        if (this.ownItemOut) {
+            onItemDropOut(oldLayout, newLayout, l);
+            if (allowCrossGridDrag) {
+                eventUtils_1.emitItemDropEvent({
+                    rglKey: rglKey,
+                    item: l,
+                });
+            }
+        }
         this.setState({
             activeDrag: null,
             layout: newLayout,
@@ -290,11 +423,22 @@ var RGL = /** @class */ (function (_super) {
         });
         this.onLayoutMaybeChanged(newLayout, oldLayout);
     };
-    RGL.prototype.onLayoutMaybeChanged = function (newLayout, oldLayout) {
+    RGL.prototype.onLayoutMaybeChanged = function (newLayout, oldLayout, isForce) {
         if (!oldLayout)
             oldLayout = this.state.layout;
+        // 计算容器位置
+        var containerEl = this.rglContainer;
+        var containerOffset = utils_1.getOffset(containerEl);
+        var width = containerEl.clientWidth;
+        var height = containerEl.clientHeight;
+        this.rglContainerPos = __assign(__assign({}, containerOffset), { width: width,
+            height: height });
+        if (isForce) {
+            this.props.onLayoutChange(newLayout, this.rglContainerPos);
+            return;
+        }
         if (!lodash_1.isEqual(oldLayout, newLayout)) {
-            this.props.onLayoutChange(newLayout);
+            this.props.onLayoutChange(newLayout, this.rglContainerPos);
         }
     };
     RGL.prototype.onResizeStart = function (i, w, h, _a) {
@@ -387,7 +531,7 @@ var RGL = /** @class */ (function (_super) {
             return null;
         var _a = this.props, width = _a.width, cols = _a.cols, margin = _a.margin, containerPadding = _a.containerPadding, rowHeight = _a.rowHeight, maxRows = _a.maxRows, useCSSTransforms = _a.useCSSTransforms, transformScale = _a.transformScale;
         // {...this.state.activeDrag} is pretty slow, actually
-        return (React.createElement(GridItem_1.default, { w: activeDrag.w, h: activeDrag.h, x: activeDrag.x, y: activeDrag.y, i: activeDrag.i, className: "react-grid-placeholder", containerWidth: width, cols: cols, margin: margin, containerPadding: containerPadding || margin, maxRows: maxRows, rowHeight: rowHeight, isDraggable: false, isResizable: false, useCSSTransforms: useCSSTransforms, transformScale: transformScale },
+        return (React.createElement(GridItem_1.default, { w: activeDrag.w, h: activeDrag.h, x: activeDrag.x, y: activeDrag.y, i: activeDrag.i, className: "react-grid-placeholder", containerWidth: width, cols: cols, margin: margin, containerPadding: containerPadding || margin, maxRows: maxRows, rowHeight: rowHeight, isDraggable: false, isResizable: false, isDroppingItem: false, useCSSTransforms: useCSSTransforms, transformScale: transformScale },
             React.createElement("div", null)));
     };
     /**
@@ -401,21 +545,25 @@ var RGL = /** @class */ (function (_super) {
         var l = utils_1.getLayoutItem(this.state.layout, String(child.key));
         if (!l)
             return null;
+        // 如果是外部拖入的组件
+        if (isDroppingItem && !this.otherItemIn)
+            return null;
         var _a = this.props, width = _a.width, cols = _a.cols, margin = _a.margin, containerPadding = _a.containerPadding, rowHeight = _a.rowHeight, maxRows = _a.maxRows, isDraggable = _a.isDraggable, isResizable = _a.isResizable, useCSSTransforms = _a.useCSSTransforms, transformScale = _a.transformScale, draggableCancel = _a.draggableCancel, draggableHandle = _a.draggableHandle;
         var _b = this.state, mounted = _b.mounted, droppingPosition = _b.droppingPosition;
+        var config = child.props['data-config'] || {};
         // Parse 'static'. Any properties defined directly on the grid item will take precedence.
-        var draggable = Boolean(!l.static && isDraggable && (l.isDraggable || l.isDraggable == null));
-        var resizable = Boolean(!l.static && isResizable && (l.isResizable || l.isResizable == null));
+        var draggable = Boolean(!config.static && !l.static && isDraggable && (l.isDraggable || l.isDraggable == null));
+        var resizable = Boolean(!config.static && !l.static && isResizable && (l.isResizable || l.isResizable == null));
         return (
         // @ts-ignore
-        React.createElement(GridItem_1.default, { containerWidth: width, cols: cols, margin: margin, containerPadding: containerPadding || margin, maxRows: maxRows, rowHeight: rowHeight, cancel: draggableCancel, handle: draggableHandle, onDragStop: this.onDragStop, onDragStart: this.onDragStart, onDrag: this.onDrag, onResizeStart: this.onResizeStart, onResize: this.onResize, onResizeStop: this.onResizeStop, isDraggable: draggable, isResizable: resizable, useCSSTransforms: useCSSTransforms && mounted, usePercentages: !mounted, transformScale: transformScale, w: l.w, h: l.h, x: l.x, y: l.y, i: l.i, minH: l.minH, minW: l.minW, maxH: l.maxH, maxW: l.maxW, static: l.static, droppingPosition: isDroppingItem ? droppingPosition : undefined }, child));
+        React.createElement(GridItem_1.default, { containerWidth: width, cols: cols, margin: margin, containerPadding: containerPadding || margin, maxRows: maxRows, rowHeight: rowHeight, cancel: draggableCancel, handle: draggableHandle, onDragStop: this.onDragStop, onDragStart: this.onDragStart, onDrag: this.onDrag, onResizeStart: this.onResizeStart, onResize: this.onResize, onResizeStop: this.onResizeStop, isDraggable: draggable, isResizable: resizable, useCSSTransforms: useCSSTransforms && mounted, usePercentages: !mounted, transformScale: transformScale, w: l.w, h: l.h, x: isDroppingItem && droppingPosition ? droppingPosition.x : l.x, y: isDroppingItem && droppingPosition ? droppingPosition.y : l.y, i: l.i, minH: l.minH, minW: l.minW, maxH: l.maxH, maxW: l.maxW, static: l.static, isDroppingItem: !!isDroppingItem }, child));
     };
     RGL.prototype.render = function () {
         var _this = this;
         var _a = this.props, className = _a.className, style = _a.style, isDroppable = _a.isDroppable;
         var mergedClassName = classNames(layoutClassName, className);
         var mergedStyle = __assign({ height: this.containerHeight() }, style);
-        return (React.createElement("div", { className: mergedClassName, style: mergedStyle, onDrop: isDroppable ? this.onDrop : utils_1.noop, onDragLeave: isDroppable ? this.onDragLeave : utils_1.noop, onDragEnter: isDroppable ? this.onDragEnter : utils_1.noop, onDragOver: isDroppable ? this.onDragOver : utils_1.noop },
+        return (React.createElement("div", { className: mergedClassName, style: mergedStyle, ref: function (ref) { _this.rglContainer = ref; }, onDrop: isDroppable ? this.onDrop : utils_1.noop, onDragLeave: isDroppable ? this.onDragLeave : utils_1.noop, onDragEnter: isDroppable ? this.onDragEnter : utils_1.noop, onDragOver: isDroppable ? this.onDragOver : utils_1.noop },
             React.Children.map(this.props.children, function (child) { return _this.processGridItem(child); }),
             isDroppable
                 && this.state.droppingDOMNode
@@ -442,6 +590,7 @@ var RGL = /** @class */ (function (_super) {
         draggableCancel: PropTypes.string,
         // A selector for the draggable handler
         draggableHandle: PropTypes.string,
+        rglKey: PropTypes.string,
         // Deprecated
         verticalCompact: function (props) {
             if (props.verticalCompact === false
@@ -491,6 +640,7 @@ var RGL = /** @class */ (function (_super) {
         transformScale: PropTypes.number,
         // If true, an external element can trigger onDrop callback with a specific grid position as a parameter
         isDroppable: PropTypes.bool,
+        allowCrossGridDrag: PropTypes.bool,
         //
         // Callbacks
         //
@@ -513,11 +663,16 @@ var RGL = /** @class */ (function (_super) {
         onDrop: PropTypes.func,
         onDragNewItemEnter: PropTypes.func,
         onDragNewItemLeave: PropTypes.func,
+        onOtherItemIn: PropTypes.func,
+        onOtherItemDrop: PropTypes.func,
+        onItemDropOut: PropTypes.func,
         dragEnterChild: PropTypes.bool,
         //
         // Other validations
         //
         droppingItem: PropTypes.shape({
+            x: PropTypes.number,
+            y: PropTypes.number,
             i: PropTypes.string.isRequired,
             w: PropTypes.number.isRequired,
             h: PropTypes.number.isRequired,
@@ -542,6 +697,7 @@ var RGL = /** @class */ (function (_super) {
         style: {},
         draggableHandle: '',
         draggableCancel: '',
+        rglKey: '',
         containerPadding: null,
         rowHeight: 150,
         maxRows: Infinity,
@@ -550,6 +706,7 @@ var RGL = /** @class */ (function (_super) {
         isDraggable: true,
         isResizable: true,
         isDroppable: false,
+        allowCrossGridDrag: false,
         useCSSTransforms: true,
         transformScale: 1,
         verticalCompact: true,
@@ -566,6 +723,9 @@ var RGL = /** @class */ (function (_super) {
         onDragStop: utils_1.noop,
         onDragNewItemEnter: utils_1.noop,
         onDragNewItemLeave: utils_1.noop,
+        onOtherItemIn: utils_1.noop,
+        onOtherItemDrop: utils_1.noop,
+        onItemDropOut: utils_1.noop,
         dragEnterChild: false,
         onResizeStart: utils_1.noop,
         onResize: utils_1.noop,

@@ -37,7 +37,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
 var PropTypes = require("prop-types");
-var lodash_isequal_1 = require("lodash.isequal");
+var isEqual = require("lodash.isequal");
 var utils_1 = require("./utils");
 var responsiveUtils_1 = require("./responsiveUtils");
 var ReactGridLayout_1 = require("./ReactGridLayout");
@@ -80,7 +80,7 @@ var ResponsiveReactGridLayout = /** @class */ (function (_super) {
         };
     };
     ResponsiveReactGridLayout.getDerivedStateFromProps = function (nextProps, prevState) {
-        if (!lodash_isequal_1.default(nextProps.layouts, prevState.layouts)) {
+        if (!isEqual(nextProps.layouts, prevState.layouts)) {
             // Allow parent to set layouts directly.
             var breakpoint = prevState.breakpoint, cols = prevState.cols;
             // Since we're setting an entirely new layout object, we must generate a new responsive layout
@@ -94,8 +94,8 @@ var ResponsiveReactGridLayout = /** @class */ (function (_super) {
         // Allow parent to set width or breakpoint directly.
         if (this.props.width != prevProps.width
             || this.props.breakpoint !== prevProps.breakpoint
-            || !lodash_isequal_1.default(this.props.breakpoints, prevProps.breakpoints)
-            || !lodash_isequal_1.default(this.props.cols, prevProps.cols)) {
+            || !isEqual(this.props.breakpoints, prevProps.breakpoints)
+            || !isEqual(this.props.cols, prevProps.cols)) {
             this.onWidthChange(this.props);
         }
     };

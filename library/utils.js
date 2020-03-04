@@ -32,6 +32,47 @@ function bottom(layout) {
     return max;
 }
 exports.bottom = bottom;
+function outOfBoundary(width, height, node) {
+    var x = node.x, y = node.y, w = node.w, h = node.h;
+    if (x < 0 || y < 0)
+        return true;
+    if (x + w > width || y + h > height)
+        return true;
+    return false;
+}
+exports.outOfBoundary = outOfBoundary;
+function isMouseIn(x, y, position) {
+    var width = position.width, height = position.height, left = position.left, top = position.top;
+    if (x > left && x < left + width && y > top && y < top + height) {
+        return true;
+    }
+    return false;
+}
+exports.isMouseIn = isMouseIn;
+function getOffset(element) {
+    var actualLeft = element.offsetLeft;
+    var actualTop = element.offsetTop;
+    var current = element.offsetParent;
+    while (current !== null) {
+        actualLeft += current.offsetLeft;
+        actualTop += current.offsetTop;
+        current = current.offsetParent;
+    }
+    return {
+        left: actualLeft,
+        top: actualTop,
+    };
+}
+exports.getOffset = getOffset;
+function calcXY(top, left, settings) {
+    var margin = settings.margin, cols = settings.cols, rowHeight = settings.rowHeight, containerPadding = settings.containerPadding, width = settings.width;
+    var padding = containerPadding || margin;
+    var colWidth = (width - margin[0] * (cols - 1) - padding[0] * 2) / cols;
+    var x = Math.round((left - margin[0]) / (colWidth + margin[0]));
+    var y = Math.round((top - margin[1]) / (rowHeight + margin[1]));
+    return { x: x, y: y };
+}
+exports.calcXY = calcXY;
 function cloneLayout(layout) {
     var newLayout = Array(layout.length);
     for (var i = 0, len = layout.length; i < len; i++) {
@@ -234,6 +275,14 @@ function getLayoutItem(layout, id) {
     }
 }
 exports.getLayoutItem = getLayoutItem;
+function getLayoutItemIndex(layout, id) {
+    for (var i = 0, len = layout.length; i < len; i++) {
+        if (layout[i].i === id)
+            return i;
+    }
+    return -1;
+}
+exports.getLayoutItemIndex = getLayoutItemIndex;
 /**
  * Returns the first item this layout collides with.
  * It doesn't appear to matter which order we approach this from, although
