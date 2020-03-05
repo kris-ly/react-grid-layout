@@ -13,7 +13,7 @@
 
 - 支持从外部拖入组件
 
-- 支持跨容器间拖拽
+- 支持跨容器间拖拽（ResponsiveReactGridLayout 还未支持）
 
 ### 2.输入输出
 
@@ -78,127 +78,147 @@ export default class BasicLayout extends React.PureComponent {
 }
 ```
 ReactGridLayout有以下几个属性：
-- WidthProvider：包裹RED的元素，使其具备基本拖拽属性
+- WidthProvider：包裹RED的元素，使其具备基本容器属性（width等）
 
 
-更多例子见test/examples
+更多例子见 test/examples
 
 ### api
 ReactGridLayout的Props
 ```javascript
 //
-// Basic props
+// 基本props
 //
 
-// This allows setting the initial width on the server side.
-// This is required unless using the HOC <WidthProvider> or similar
+className?: string,
+
+style?: object,
+// 可以在服务器端设置初始宽度。
+// 必需的props，除非使用HOC <WidthProvider>或类似的方法
 width: number,
 
-// If true, the container height swells and contracts to fit contents
-autoSize: ?boolean = true,
+// 如果为true，则容器高度将自动膨胀或者收缩以适合内容物
+autoSize?: boolean = true,
 
-// Number of columns in this layout.
-cols: ?number = 12,
+// 此布局中的列数。
+cols?: number = 12,
 
-// A CSS selector for tags that will not be draggable.
-// For example: draggableCancel:'.MyNonDraggableAreaClassName'
-// If you forget the leading . it will not work.
-draggableCancel: ?string = '',
+// 不可拖动标签的CSS选择器。
+// 例如：draggableCancel：'.MyNonDraggableAreaClassName'
+draggableCancel?: string = '',
 
-// A CSS selector for tags that will act as the draggable handle.
-// For example: draggableHandle:'.MyDragHandleClassName'
-// If you forget the leading . it will not work.
-draggableHandle: ?string = '',
+// CSS标签选择器，将其用作可拖动的句柄。
+// 例如：draggableHandle：'.MyDragHandleClassName'
+draggableHandle?: string = '',
 
-// If true, the layout will compact vertically
-verticalCompact: ?boolean = true,
+// 标志当前 grid container，跨容器拖拽时需要
+rglKey?: string,
 
-// Compaction type.
-compactType: ?('vertical' | 'horizontal') = 'vertical';
+// 如果为true，则布局将垂直压缩（Deprecated）
+verticalCompact?: boolean = true,
 
-// Layout is an array of object with the format:
-// {x: number, y: number, w: number, h: number}
-// The index into the layout must match the key used on each item component.
-// If you choose to use custom keys, you can specify that key in the layout
-// array objects like so:
-// {i: string, x: number, y: number, w: number, h: number}
-layout: ?array = null, // If not provided, use data-grid props on children
+// 压缩类型：垂直或者水平.
+compactType?: ('vertical' | 'horizontal') = 'vertical';
 
-// Margin between items [x, y] in px.
-margin: ?[number, number] = [10, 10],
+// Layout是一个对象数组，其格式为：
+// {x: number，y: number，w: number，h: number}
+// 布局的索引必须与每个项目组件上使用的key匹配。
+// 如果您选择使用自定义key，则可以在布局中指定该key
+// 数组对象如下：
+// {i：string，x: number，y: number，w: number，h: number}
+layout?: array = null, //如果未提供，请在子级上添加 data-grid 的 props
 
-// Padding inside the container [x, y] in px
-containerPadding: ?[number, number] = margin,
+// item[x，y]之间的 margin，以 px 为单位。
+margin?: [number, number] = [10, 10],
 
-// Rows have a static height, but you can change this based on breakpoints
-// if you like.
-rowHeight: ?number = 150,
+// 单位在容器[x，y]内的 padding，以 px 为单位。
+containerPadding?: [number, number] = margin,
 
-// Configuration of a dropping element. Dropping element is a "virtual" element
-// which appears when you drag over some element from outside.
-// It can be changed by passing specific parameters:
-//  i - id of an element
-//  w - width of an element
-//  h - height of an element
+// 行具有固定高度，但是您可以根据断点更改此高度
+rowHeight?: number = 150,
+
+maxRows?: number,
+// 从外部拖入元素的配置。 拖入元素是“虚拟”的
+// 当从外部拖动某些元素时显示可以通过传递特定参数来更改它：
+// i-元素的ID
+// w-元素的宽度
+// h-元素的高度
 droppingItem?: { i: string, w: number, h: number }
 
 //
-// Flags
+// 标志
 //
-isDraggable: ?boolean = true,
-isResizable: ?boolean = true,
-// Uses CSS3 translate() instead of position top/left.
-// This makes about 6x faster paint performance
-useCSSTransforms: ?boolean = true,
-// If parent DOM node of ResponsiveReactGridLayout or ReactGridLayout has "transform: scale(n)" css property,
-// we should set scale coefficient to avoid render artefacts while dragging.
-transformScale: ?number = 1,
+isDraggable?: boolean = true,
+isResizable?: boolean = true,
 
-// If true, grid items won't change position when being
-// dragged over.
-preventCollision: ?boolean = false;
+// 使用CSS3 translate（）代替 left/top 定位
+// 这样可使 paint 性能提高约6倍
+useCSSTransforms?: boolean = true,
 
-// If true, droppable elements (with `draggable={true}` attribute)
-// can be dropped on the grid. It triggers "onDrop" callback
-// with position and event object as parameters.
-// It can be useful for dropping an element in a specific position
+// 如果ResponsiveReactGridLayout或ReactGridLayout的父DOM节点具有“ transform: scale(n)” css属性，
+// 我们应该设置比例系数，以避免在拖动时渲染假象。
+transformScale?: number = 1,
+
+// 如果为true，则有其他 item 拖到上方时不会更改自身位置。
+preventCollision?: boolean = false;
+
+//如果为true，则可以将可放置元素（具有`draggable = {true}`属性）放置在网格上。 它使用位置和事件对象作为参数触发“ onDrop”回调。 将元素放置在特定位置时很有用
+//注意：如果使用的是Firefox，则应添加`onDragStart = {e => e.dataTransfer.setData（'text / plain'，''）}）属性和`draggable = {true}`，否则此功能将工作不正确。 Firefox需要onDragStart属性才能进行拖动初始化@see https://bugzilla.mozilla.org/show_bug.cgi?id=568313
+isDroppable?: boolean = false
+
+// 是否允许跨容器拖拽
+allowCrossGridDrag?: boolean = false
 //
-// NOTE: In case of using Firefox you should add
-// `onDragStart={e => e.dataTransfer.setData('text/plain', '')}` attribute
-// along with `draggable={true}` otherwise this feature will work incorrect.
-// onDragStart attribute is required for Firefox for a dragging initialization
-// @see https://bugzilla.mozilla.org/show_bug.cgi?id=568313
-isDroppable: ?boolean = false
-
-//
-// Callbacks
+// 回调函数
 //
 
-// Callback so you can save the layout.
-// Calls back with (currentLayout) after every drag or resize stop.
+// 该回调方便保存布局。
+// 每次停止拖动或调整大小后，使用（currentLayout）进行回调。
 onLayoutChange: (layout: Layout) => void,
 
-//
-// All callbacks below have signature (layout, oldItem, newItem, placeholder, e, element).
-// 'start' and 'stop' callbacks pass `undefined` for 'placeholder'.
-//
+// 下面的所有回调都具有相同的参数 (layout, oldItem, newItem, placeholder, e, element)。
+// 'start'和'stop'回调传递给'placeholder'的'undefined'。
 type ItemCallback = (layout: Layout, oldItem: LayoutItem, newItem: LayoutItem,
                      placeholder: LayoutItem, e: MouseEvent, element: HTMLElement) => void;
 
-// Calls when drag starts.
+// 拖动开始时调用。
 onDragStart: ItemCallback,
-// Calls on each drag movement.
+
+// 调用每个拖动动作。
 onDrag: ItemCallback,
-// Calls when drag is complete.
+
+// 拖动完成后调用。
 onDragStop: ItemCallback,
-// Calls when resize starts.
+
+//在调整大小开始时调用。
 onResizeStart: ItemCallback,
-// Calls when resize movement happens.
+
+//发生尺寸调整时调用。
 onResize: ItemCallback,
-// Calls when resize is complete.
+
+//调整大小后调用。
 onResizeStop: ItemCallback,
-// Calls when some element has been dropped
-onDrop: (elemParams: { x: number, y: number, e: Event }) => void
+
+// 拖入某个元素时调用
+onDrop: PropTypes.func,
+
+// 拖入的元素进入时
+onDragNewItemEnter: PropTypes.func,
+
+// 拖入的元素离开时
+onDragNewItemLeave: PropTypes.func,
+
+// 其他grid容器拖入了元素（跨容器拖拽）
+onOtherItemIn: PropTypes.func,
+
+// 其他grid容器拖入的元素并放置（跨容器拖拽）
+onOtherItemDrop: PropTypes.func,
+
+// 其他grid容器拖入的元素又离开（跨容器拖拽）
+onItemDropOut: PropTypes.func,
+
+// 拖入的元素进入了子 gird 容器（父子容器嵌套）
+dragEnterChild: PropTypes.bool,
 ```
 
 ## 二、基本逻辑
