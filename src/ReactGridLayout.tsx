@@ -521,18 +521,16 @@ class RGL extends React.Component<Props, State> {
             placeholder: true,
             i,
         };
-        if (outOfBoundary(cols, bottom(layout), {
+        if (allowCrossGridDrag && outOfBoundary(cols, bottom(layout), {
             x, y, w: l.w, h: l.h,
         })) {
             const { clientX, clientY } = e as any;
             this.ownItemOut = true;
-            if (allowCrossGridDrag) {
-                emitItemOutEvent({ // 组件移出
-                    item: l,
-                    clientX,
-                    clientY,
-                });
-            }
+            emitItemOutEvent({ // 组件移出
+                item: l,
+                clientX,
+                clientY,
+            });
 
             this.setState({
                 activeDrag: null,
@@ -583,7 +581,7 @@ class RGL extends React.Component<Props, State> {
         } = this.props;
         const l = getLayoutItem(layout, i);
         if (!l) return;
-        if (outOfBoundary(cols, bottom(layout), {
+        if (allowCrossGridDrag && outOfBoundary(cols, bottom(layout), {
             x, y, w: l.w, h: l.h,
         })) {
             const idx = getLayoutItemIndex(layout, i);
@@ -818,6 +816,7 @@ class RGL extends React.Component<Props, State> {
             transformScale,
             draggableCancel,
             draggableHandle,
+            allowCrossGridDrag,
         } = this.props;
         const { mounted, droppingPosition } = this.state;
 
@@ -849,6 +848,7 @@ class RGL extends React.Component<Props, State> {
                 onResizeStop={this.onResizeStop}
                 isDraggable={draggable}
                 isResizable={resizable}
+                allowCrossGridDrag={allowCrossGridDrag}
                 useCSSTransforms={useCSSTransforms && mounted}
                 usePercentages={!mounted}
                 transformScale={transformScale}

@@ -343,18 +343,16 @@ var RGL = /** @class */ (function (_super) {
             placeholder: true,
             i: i,
         };
-        if (utils_1.outOfBoundary(cols, utils_1.bottom(layout), {
+        if (allowCrossGridDrag && utils_1.outOfBoundary(cols, utils_1.bottom(layout), {
             x: x, y: y, w: l.w, h: l.h,
         })) {
             var _c = e, clientX = _c.clientX, clientY = _c.clientY;
             this.ownItemOut = true;
-            if (allowCrossGridDrag) {
-                eventUtils_1.emitItemOutEvent({
-                    item: l,
-                    clientX: clientX,
-                    clientY: clientY,
-                });
-            }
+            eventUtils_1.emitItemOutEvent({
+                item: l,
+                clientX: clientX,
+                clientY: clientY,
+            });
             this.setState({
                 activeDrag: null,
             });
@@ -389,7 +387,7 @@ var RGL = /** @class */ (function (_super) {
         var l = utils_1.getLayoutItem(layout, i);
         if (!l)
             return;
-        if (utils_1.outOfBoundary(cols, utils_1.bottom(layout), {
+        if (allowCrossGridDrag && utils_1.outOfBoundary(cols, utils_1.bottom(layout), {
             x: x, y: y, w: l.w, h: l.h,
         })) {
             var idx = utils_1.getLayoutItemIndex(layout, i);
@@ -548,7 +546,7 @@ var RGL = /** @class */ (function (_super) {
         // 如果是外部拖入的组件
         if (isDroppingItem && !this.otherItemIn)
             return null;
-        var _a = this.props, width = _a.width, cols = _a.cols, margin = _a.margin, containerPadding = _a.containerPadding, rowHeight = _a.rowHeight, maxRows = _a.maxRows, isDraggable = _a.isDraggable, isResizable = _a.isResizable, useCSSTransforms = _a.useCSSTransforms, transformScale = _a.transformScale, draggableCancel = _a.draggableCancel, draggableHandle = _a.draggableHandle;
+        var _a = this.props, width = _a.width, cols = _a.cols, margin = _a.margin, containerPadding = _a.containerPadding, rowHeight = _a.rowHeight, maxRows = _a.maxRows, isDraggable = _a.isDraggable, isResizable = _a.isResizable, useCSSTransforms = _a.useCSSTransforms, transformScale = _a.transformScale, draggableCancel = _a.draggableCancel, draggableHandle = _a.draggableHandle, allowCrossGridDrag = _a.allowCrossGridDrag;
         var _b = this.state, mounted = _b.mounted, droppingPosition = _b.droppingPosition;
         var config = child.props['data-config'] || {};
         // Parse 'static'. Any properties defined directly on the grid item will take precedence.
@@ -556,7 +554,7 @@ var RGL = /** @class */ (function (_super) {
         var resizable = Boolean(!config.static && !l.static && isResizable && (l.isResizable || l.isResizable == null));
         return (
         // @ts-ignore
-        React.createElement(GridItem_1.default, { containerWidth: width, cols: cols, margin: margin, containerPadding: containerPadding || margin, maxRows: maxRows, rowHeight: rowHeight, cancel: draggableCancel, handle: draggableHandle, onDragStop: this.onDragStop, onDragStart: this.onDragStart, onDrag: this.onDrag, onResizeStart: this.onResizeStart, onResize: this.onResize, onResizeStop: this.onResizeStop, isDraggable: draggable, isResizable: resizable, useCSSTransforms: useCSSTransforms && mounted, usePercentages: !mounted, transformScale: transformScale, w: l.w, h: l.h, x: isDroppingItem && droppingPosition ? droppingPosition.x : l.x, y: isDroppingItem && droppingPosition ? droppingPosition.y : l.y, i: l.i, minH: l.minH, minW: l.minW, maxH: l.maxH, maxW: l.maxW, static: l.static, isDroppingItem: !!isDroppingItem }, child));
+        React.createElement(GridItem_1.default, { containerWidth: width, cols: cols, margin: margin, containerPadding: containerPadding || margin, maxRows: maxRows, rowHeight: rowHeight, cancel: draggableCancel, handle: draggableHandle, onDragStop: this.onDragStop, onDragStart: this.onDragStart, onDrag: this.onDrag, onResizeStart: this.onResizeStart, onResize: this.onResize, onResizeStop: this.onResizeStop, isDraggable: draggable, isResizable: resizable, allowCrossGridDrag: allowCrossGridDrag, useCSSTransforms: useCSSTransforms && mounted, usePercentages: !mounted, transformScale: transformScale, w: l.w, h: l.h, x: isDroppingItem && droppingPosition ? droppingPosition.x : l.x, y: isDroppingItem && droppingPosition ? droppingPosition.y : l.y, i: l.i, minH: l.minH, minW: l.minW, maxH: l.maxH, maxW: l.maxW, static: l.static, isDroppingItem: !!isDroppingItem }, child));
     };
     RGL.prototype.render = function () {
         var _this = this;

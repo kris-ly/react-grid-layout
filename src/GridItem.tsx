@@ -43,6 +43,7 @@ type Props = {
     maxRows: number;
     isDraggable: boolean;
     isResizable: boolean;
+    allowCrossGridDrag?: boolean;
     static?: boolean;
     useCSSTransforms?: boolean;
     usePercentages?: boolean;
@@ -132,6 +133,7 @@ export default class GridItem extends React.Component<Props, State> {
         isDraggable: PropTypes.bool.isRequired,
         isResizable: PropTypes.bool.isRequired,
         static: PropTypes.bool,
+        allowCrossGridDrag: PropTypes.bool,
 
         // Use CSS transforms instead of top/left
         useCSSTransforms: PropTypes.bool.isRequired,
@@ -155,6 +157,7 @@ export default class GridItem extends React.Component<Props, State> {
         minW: 1,
         maxH: Infinity,
         maxW: Infinity,
+        allowCrossGridDrag: false,
         transformScale: 1,
     };
 
@@ -234,7 +237,7 @@ export default class GridItem extends React.Component<Props, State> {
         y: number;
     } {
         const {
-            margin, cols, rowHeight, w, h, maxRows,
+            margin, cols, rowHeight, w, h, maxRows, allowCrossGridDrag,
         } = this.props;
         const colWidth = this.calcColWidth();
 
@@ -245,13 +248,13 @@ export default class GridItem extends React.Component<Props, State> {
         // l - m = x(c + m)
         // (l - m) / (c + m) = x
         // x = (left - margin) / (coldWidth + margin)
-        const x = Math.round((left - margin[0]) / (colWidth + margin[0]));
-        const y = Math.round((top - margin[1]) / (rowHeight + margin[1]));
-
+        let x = Math.round((left - margin[0]) / (colWidth + margin[0]));
+        let y = Math.round((top - margin[1]) / (rowHeight + margin[1]));
         // Capping
-        // x = Math.max(Math.min(x, cols - w), 0);
-        // y = Math.max(Math.min(y, maxRows - h), 0);
-
+        if (!allowCrossGridDrag) {
+            x = Math.max(Math.min(x, cols - w), 0);
+            y = Math.max(Math.min(y, maxRows - h), 0);
+        }
         return { x, y };
     }
 

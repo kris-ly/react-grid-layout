@@ -204,7 +204,7 @@ var GridItem = /** @class */ (function (_super) {
    * @return {Object} x and y in grid units.
    */
     GridItem.prototype.calcXY = function (top, left) {
-        var _a = this.props, margin = _a.margin, cols = _a.cols, rowHeight = _a.rowHeight, w = _a.w, h = _a.h, maxRows = _a.maxRows;
+        var _a = this.props, margin = _a.margin, cols = _a.cols, rowHeight = _a.rowHeight, w = _a.w, h = _a.h, maxRows = _a.maxRows, allowCrossGridDrag = _a.allowCrossGridDrag;
         var colWidth = this.calcColWidth();
         // left = colWidth * x + margin * (x + 1)
         // l = cx + m(x+1)
@@ -216,8 +216,10 @@ var GridItem = /** @class */ (function (_super) {
         var x = Math.round((left - margin[0]) / (colWidth + margin[0]));
         var y = Math.round((top - margin[1]) / (rowHeight + margin[1]));
         // Capping
-        // x = Math.max(Math.min(x, cols - w), 0);
-        // y = Math.max(Math.min(y, maxRows - h), 0);
+        if (!allowCrossGridDrag) {
+            x = Math.max(Math.min(x, cols - w), 0);
+            y = Math.max(Math.min(y, maxRows - h), 0);
+        }
         return { x: x, y: y };
     };
     /**
@@ -410,6 +412,7 @@ var GridItem = /** @class */ (function (_super) {
         isDraggable: PropTypes.bool.isRequired,
         isResizable: PropTypes.bool.isRequired,
         static: PropTypes.bool,
+        allowCrossGridDrag: PropTypes.bool,
         // Use CSS transforms instead of top/left
         useCSSTransforms: PropTypes.bool.isRequired,
         transformScale: PropTypes.number,
@@ -430,6 +433,7 @@ var GridItem = /** @class */ (function (_super) {
         minW: 1,
         maxH: Infinity,
         maxW: Infinity,
+        allowCrossGridDrag: false,
         transformScale: 1,
     };
     return GridItem;
