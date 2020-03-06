@@ -238,9 +238,9 @@ var RGL = /** @class */ (function (_super) {
         eventUtils_1.bindItemOutEvent(function (params) {
             if (_this.ownItemOut)
                 return;
-            var item = params.item, clientX = params.clientX, clientY = params.clientY;
+            var item = params.item, pageX = params.pageX, pageY = params.pageY;
             var _a = _this.props, droppingItem = _a.droppingItem, rglKey = _a.rglKey;
-            if (utils_1.isMouseIn(clientX, clientY, _this.rglContainerPos)) {
+            if (utils_1.isMouseIn(pageX, pageY, _this.rglContainerPos)) {
                 var newDroppingItem = {
                     i: droppingItem.i,
                     w: item.w,
@@ -248,8 +248,8 @@ var RGL = /** @class */ (function (_super) {
                 };
                 var _b = _this.rglContainerPos, left = _b.left, top_1 = _b.top;
                 _this.otherItemIn = true;
-                _this.moveItem(newDroppingItem, clientX - left, clientY - top_1);
-                _this.props.onOtherItemIn(rglKey, item, clientX, clientY);
+                _this.moveItem(newDroppingItem, pageX - left, pageY - top_1);
+                _this.props.onOtherItemIn(rglKey, item, pageX, pageY);
                 return;
             }
             if (_this.otherItemIn) {
@@ -338,20 +338,20 @@ var RGL = /** @class */ (function (_super) {
         var placeholder = {
             w: l.w,
             h: l.h,
-            x: x,
-            y: y,
+            x: l.x,
+            y: l.y,
             placeholder: true,
             i: i,
         };
         if (allowCrossGridDrag && utils_1.outOfBoundary(cols, utils_1.bottom(layout), {
             x: x, y: y, w: l.w, h: l.h,
         })) {
-            var _c = e, clientX = _c.clientX, clientY = _c.clientY;
+            var _c = e, pageX = _c.pageX, pageY = _c.pageY;
             this.ownItemOut = true;
             eventUtils_1.emitItemOutEvent({
                 item: l,
-                clientX: clientX,
-                clientY: clientY,
+                pageX: pageX,
+                pageY: pageY,
             });
             this.setState({
                 activeDrag: null,

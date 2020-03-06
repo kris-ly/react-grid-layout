@@ -395,9 +395,9 @@ class RGL extends React.Component<Props, State> {
         if (!this.props.allowCrossGridDrag) return;
         bindItemOutEvent((params) => {
             if (this.ownItemOut) return;
-            const { item, clientX, clientY } = params;
+            const { item, pageX, pageY } = params;
             const { droppingItem, rglKey } = this.props;
-            if (isMouseIn(clientX, clientY, this.rglContainerPos)) {
+            if (isMouseIn(pageX, pageY, this.rglContainerPos)) {
                 const newDroppingItem = {
                     i: droppingItem.i,
                     w: item.w,
@@ -405,8 +405,8 @@ class RGL extends React.Component<Props, State> {
                 };
                 const { left, top } = this.rglContainerPos;
                 this.otherItemIn = true;
-                this.moveItem(newDroppingItem, clientX - left, clientY - top);
-                this.props.onOtherItemIn(rglKey, item, clientX, clientY);
+                this.moveItem(newDroppingItem, pageX - left, pageY - top);
+                this.props.onOtherItemIn(rglKey, item, pageX, pageY);
                 return;
             }
             if (this.otherItemIn) {
@@ -516,20 +516,23 @@ class RGL extends React.Component<Props, State> {
         const placeholder = {
             w: l.w,
             h: l.h,
-            x,
-            y,
+            x: l.x,
+            y: l.y,
             placeholder: true,
             i,
         };
         if (allowCrossGridDrag && outOfBoundary(cols, bottom(layout), {
             x, y, w: l.w, h: l.h,
         })) {
-            const { clientX, clientY } = e as any;
+            const {
+                pageX, pageY,
+            } = e as any;
+
             this.ownItemOut = true;
             emitItemOutEvent({ // 组件移出
                 item: l,
-                clientX,
-                clientY,
+                pageX,
+                pageY,
             });
 
             this.setState({
