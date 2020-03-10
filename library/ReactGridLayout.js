@@ -33,15 +33,15 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
 var PropTypes = require("prop-types");
-var lodash_1 = require("lodash");
+var isEqual = require("lodash.isequal");
 var classNames = require("classnames");
 var utils_1 = require("./utils");
 var GridItem_1 = require("./GridItem");
 var eventUtils_1 = require("./eventUtils");
 // End Types
 var compactType = function (props) {
-    var _a = props || {}, verticalCompact = _a.verticalCompact, compactType = _a.compactType;
-    return verticalCompact === false ? null : compactType;
+    var _a = props || {}, verticalCompact = _a.verticalCompact, theCompactType = _a.compactType;
+    return verticalCompact === false ? null : theCompactType;
 };
 var layoutClassName = 'react-grid-layout';
 var isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
@@ -203,7 +203,7 @@ var RGL = /** @class */ (function (_super) {
         // }
         // Legacy support for compactType
         // Allow parent to set layout directly.
-        if (!lodash_1.isEqual(nextProps.layout, prevState.propsLayout)
+        if (!isEqual(nextProps.layout, prevState.propsLayout)
             || nextProps.compactType !== prevState.compactType) {
             newLayoutBase = nextProps.layout;
         }
@@ -435,7 +435,7 @@ var RGL = /** @class */ (function (_super) {
             this.props.onLayoutChange(newLayout, this.rglContainerPos);
             return;
         }
-        if (!lodash_1.isEqual(oldLayout, newLayout)) {
+        if (!isEqual(oldLayout, newLayout)) {
             this.props.onLayoutChange(newLayout, this.rglContainerPos);
         }
     };

@@ -1,101 +1,5 @@
-import { isEqual } from 'lodash';
 import * as React from 'react';
-
-export type LayoutItem = {
-    w: number;
-    h: number;
-    x: number;
-    y: number;
-    i: string;
-    minW?: number;
-    minH?: number;
-    maxW?: number;
-    maxH?: number;
-    moved?: boolean;
-    static?: boolean;
-    isDraggable?: boolean | null | undefined;
-    isResizable?: boolean | null | undefined;
-};
-
-export type Layout = Array<LayoutItem>;
-
-export type Position = {
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-};
-
-export type ReactDraggableCallbackData = {
-    node: HTMLElement;
-    x?: number;
-    y?: number;
-    deltaX: number;
-    deltaY: number;
-    lastX?: number;
-    lastY?: number;
-};
-
-export type PartialPosition = {
-    left: number;
-    top: number;
-};
-
-export type DroppingPosition = {
-    x: number;
-    y: number;
-    e?: Event;
-};
-
-export type Size = {
-    width: number;
-    height: number;
-};
-
-export type GridDragEvent = {
-    e: Event;
-    node?: HTMLElement | null;
-    newPosition?: PartialPosition;
-};
-
-export interface ContainerSettings {
-    margin: [number, number];
-    containerPadding: [number, number] | null;
-    rowHeight: number;
-    cols: number;
-    width: number;
-}
-
-export type GridResizeEvent = {
-    e: Event;
-    node: HTMLElement;
-    size: Size;
-};
-
-export type DragOverEvent = MouseEvent & {
-    nativeEvent: {
-        layerX: number;
-        layerY: number;
-        target: {
-            className: String;
-        };
-    };
-};
-
-type REl = React.ReactElement<any>;
-export type ReactChildren = React.ReactNode;
-
-// All callbacks are of the signature (layout, oldItem, newItem, placeholder, e).
-export type EventCallback = (
-    a: Layout,
-    oldItem: LayoutItem | null | undefined,
-    newItem: LayoutItem | null | undefined,
-    placeholder: LayoutItem | null | undefined,
-    b: Event,
-    c: HTMLElement | null | undefined
-) => undefined;
-
-export type CompactType = 'horizontal' | 'vertical' | null | undefined;
+import * as isEqual from 'lodash.isequal';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const DEBUG = false;
@@ -125,7 +29,7 @@ export function outOfBoundary(width, height, node): boolean {
     return false;
 }
 
-export function isMouseIn(x: number, y: number, position: Position): boolean {
+export function isMouseIn(x: number, y: number, position: PositionType): boolean {
     const {
         width, height, left, top,
     } = position;
@@ -284,7 +188,7 @@ function resolveCompactionCollision(
     for (let i = itemIndex + 1; i < layout.length; i++) {
         const otherItem = layout[i];
         // Ignore static items
-        if (otherItem.static) continue;
+        if (otherItem.static) continue; // eslint-disable-line
 
         // Optimization: we can break early if we know we're past this el
         // We can do this b/c it's a sorted layout
@@ -604,7 +508,7 @@ export function setTransform(
         left,
         width,
         height,
-    }: Position,
+    }: PositionType,
 ): any {
     // Replace unitless items with px
     const translate = `translate(${left}px,${top}px)`;
@@ -626,7 +530,7 @@ export function setTopLeft(
         left,
         width,
         height,
-    }: Position,
+    }: PositionType,
 ): any {
     return {
         top: `${top}px`,
@@ -775,7 +679,7 @@ export function validateLayout(layout: Layout, contextName: string = 'Layout'): 
 
 // Flow can't really figure this out, so we just use Object
 export function autoBindHandlers(el: any, fns: Array<string>): void {
-    fns.forEach(key => (el[key] = el[key].bind(el)));
+    fns.forEach((key) => { el[key] = el[key].bind(el); });
 }
 
 function log(...args) {

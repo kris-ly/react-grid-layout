@@ -64,6 +64,17 @@ var ResponsiveReactGridLayout = /** @class */ (function (_super) {
         };
         return _this;
     }
+    ResponsiveReactGridLayout.getDerivedStateFromProps = function (nextProps, prevState) {
+        if (!isEqual(nextProps.layouts, prevState.layouts)) {
+            // Allow parent to set layouts directly.
+            var breakpoint = prevState.breakpoint, cols = prevState.cols;
+            // Since we're setting an entirely new layout object, we must generate a new responsive layout
+            // if one does not exist.
+            var newLayout = responsiveUtils_1.findOrGenerateResponsiveLayout(nextProps.layouts, nextProps.breakpoints, breakpoint, breakpoint, cols, nextProps.compactType);
+            return { layout: newLayout, layouts: nextProps.layouts };
+        }
+        return null;
+    };
     ResponsiveReactGridLayout.prototype.generateInitialState = function () {
         var _a = this.props, width = _a.width, breakpoints = _a.breakpoints, layouts = _a.layouts, cols = _a.cols;
         var breakpoint = responsiveUtils_1.getBreakpointFromWidth(breakpoints, width);
@@ -79,20 +90,9 @@ var ResponsiveReactGridLayout = /** @class */ (function (_super) {
             cols: colNo,
         };
     };
-    ResponsiveReactGridLayout.getDerivedStateFromProps = function (nextProps, prevState) {
-        if (!isEqual(nextProps.layouts, prevState.layouts)) {
-            // Allow parent to set layouts directly.
-            var breakpoint = prevState.breakpoint, cols = prevState.cols;
-            // Since we're setting an entirely new layout object, we must generate a new responsive layout
-            // if one does not exist.
-            var newLayout = responsiveUtils_1.findOrGenerateResponsiveLayout(nextProps.layouts, nextProps.breakpoints, breakpoint, breakpoint, cols, nextProps.compactType);
-            return { layout: newLayout, layouts: nextProps.layouts };
-        }
-        return null;
-    };
     ResponsiveReactGridLayout.prototype.componentDidUpdate = function (prevProps) {
         // Allow parent to set width or breakpoint directly.
-        if (this.props.width != prevProps.width
+        if (this.props.width !== prevProps.width
             || this.props.breakpoint !== prevProps.breakpoint
             || !isEqual(this.props.breakpoints, prevProps.breakpoints)
             || !isEqual(this.props.cols, prevProps.cols)) {

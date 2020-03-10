@@ -13,9 +13,7 @@ import {
     getColsFromBreakpoint,
     findOrGenerateResponsiveLayout,
 } from './responsiveUtils';
-import ReactGridLayout from './ReactGridLayout';
-import { Props as RGLProps } from './ReactGridLayout';
-import { Layout } from './utils';
+import ReactGridLayout, { PropsType as RGLProps } from './ReactGridLayout';
 
 const type = obj => Object.prototype.toString.call(obj);
 
@@ -49,8 +47,8 @@ type State = {
 type Props = {
     // Responsive config
     breakpoint: string;
-    breakpoints: GridLayout.Breakpoints;
-    cols: GridLayout.Breakpoints;
+    breakpoints: Breakpoints;
+    cols: Breakpoints;
     layouts: {
         [key: string]: Layout;
     };
@@ -167,6 +165,27 @@ export default class ResponsiveReactGridLayout extends React.Component<
 
     state = this.generateInitialState();
 
+    static getDerivedStateFromProps(nextProps: Props, prevState: State) {
+        if (!isEqual(nextProps.layouts, prevState.layouts)) {
+            // Allow parent to set layouts directly.
+            const { breakpoint, cols } = prevState;
+
+            // Since we're setting an entirely new layout object, we must generate a new responsive layout
+            // if one does not exist.
+            const newLayout = findOrGenerateResponsiveLayout(
+                nextProps.layouts,
+                nextProps.breakpoints,
+                breakpoint,
+                breakpoint,
+                cols,
+                nextProps.compactType,
+            );
+            return { layout: newLayout, layouts: nextProps.layouts };
+        }
+
+        return null;
+    }
+
     generateInitialState(): State {
         const {
             width, breakpoints, layouts, cols,
@@ -193,31 +212,10 @@ export default class ResponsiveReactGridLayout extends React.Component<
         };
     }
 
-    static getDerivedStateFromProps(nextProps: Props, prevState: State) {
-        if (!isEqual(nextProps.layouts, prevState.layouts)) {
-            // Allow parent to set layouts directly.
-            const { breakpoint, cols } = prevState;
-
-            // Since we're setting an entirely new layout object, we must generate a new responsive layout
-            // if one does not exist.
-            const newLayout = findOrGenerateResponsiveLayout(
-                nextProps.layouts,
-                nextProps.breakpoints,
-                breakpoint,
-                breakpoint,
-                cols,
-                nextProps.compactType,
-            );
-            return { layout: newLayout, layouts: nextProps.layouts };
-        }
-
-        return null;
-    }
-
     componentDidUpdate(prevProps: Props) {
     // Allow parent to set width or breakpoint directly.
         if (
-            this.props.width != prevProps.width
+            this.props.width !== prevProps.width
       || this.props.breakpoint !== prevProps.breakpoint
       || !isEqual(this.props.breakpoints, prevProps.breakpoints)
       || !isEqual(this.props.cols, prevProps.cols)

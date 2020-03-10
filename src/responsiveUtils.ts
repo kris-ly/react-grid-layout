@@ -1,8 +1,5 @@
 import { cloneLayout, compact, correctBounds } from './utils';
 
-import { CompactType, Layout } from './utils';
-
-
 /**
  * Given breakpoints, return an array of breakpoints sorted by width. This is usually
  * e.g. ['xxs', 'xs', 'sm', ...]
@@ -10,7 +7,7 @@ import { CompactType, Layout } from './utils';
  * @param  {Object} breakpoints Key/value pair of breakpoint names to widths.
  * @return {Array}              Sorted breakpoints.
  */
-export function sortBreakpoints(breakpoints: GridLayout.Breakpoints): Array<string> {
+export function sortBreakpoints(breakpoints: Breakpoints): Array<string> {
     const keys: Array<string> = Object.keys(breakpoints);
     return keys.sort((a, b) => breakpoints[a] - breakpoints[b]);
 }
@@ -23,7 +20,7 @@ export function sortBreakpoints(breakpoints: GridLayout.Breakpoints): Array<stri
  * @param  {Number} width Screen width.
  * @return {String}       Highest breakpoint that is less than width.
  */
-export function getBreakpointFromWidth(breakpoints: GridLayout.Breakpoints, width: number): string {
+export function getBreakpointFromWidth(breakpoints: Breakpoints, width: number): string {
     const sorted = sortBreakpoints(breakpoints);
     let matching = sorted[0];
     for (let i = 1, len = sorted.length; i < len; i++) {
@@ -39,7 +36,7 @@ export function getBreakpointFromWidth(breakpoints: GridLayout.Breakpoints, widt
  * @param  {Object} cols       Map of breakpoints to cols.
  * @return {Number}            Number of cols.
  */
-export function getColsFromBreakpoint(breakpoint: string, cols: GridLayout.Breakpoints): number {
+export function getColsFromBreakpoint(breakpoint: string, cols: Breakpoints): number {
     if (!cols[breakpoint]) {
         throw new Error(
             `ResponsiveReactGridLayout: \`cols\` entry for breakpoint ${
@@ -65,8 +62,8 @@ export function getColsFromBreakpoint(breakpoint: string, cols: GridLayout.Break
  * @return {Array}             New layout.
  */
 export function findOrGenerateResponsiveLayout(
-    layouts: GridLayout.ResponsiveLayout,
-    breakpoints: GridLayout.Breakpoints,
+    layouts: ResponsiveLayout,
+    breakpoints: Breakpoints,
     breakpoint: string,
     lastBreakpoint: string,
     cols: number,

@@ -11,8 +11,8 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var lodash_1 = require("lodash");
 var React = require("react");
+var isEqual = require("lodash.isequal");
 var isProduction = process.env.NODE_ENV === 'production';
 var DEBUG = false;
 /**
@@ -106,7 +106,7 @@ exports.cloneLayoutItem = cloneLayoutItem;
  * This will catch differences in keys, order, and length.
  */
 function childrenEqual(a, b) {
-    return lodash_1.isEqual(
+    return isEqual(
     // @ts-ignore
     React.Children.map(a, function (c) { return c.key; }), 
     // @ts-ignore
@@ -178,7 +178,7 @@ function resolveCompactionCollision(layout, item, moveToCoord, axis) {
         var otherItem = layout[i];
         // Ignore static items
         if (otherItem.static)
-            continue;
+            continue; // eslint-disable-line
         // Optimization: we can break early if we know we're past this el
         // We can do this b/c it's a sorted layout
         if (otherItem.y > item.y + item.h)
@@ -565,7 +565,7 @@ function validateLayout(layout, contextName) {
 exports.validateLayout = validateLayout;
 // Flow can't really figure this out, so we just use Object
 function autoBindHandlers(el, fns) {
-    fns.forEach(function (key) { return (el[key] = el[key].bind(el)); });
+    fns.forEach(function (key) { el[key] = el[key].bind(el); });
 }
 exports.autoBindHandlers = autoBindHandlers;
 function log() {

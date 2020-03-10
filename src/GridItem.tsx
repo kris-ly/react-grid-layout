@@ -1,23 +1,10 @@
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
 import * as PropTypes from 'prop-types';
 import { DraggableCore } from 'react-draggable';
 import { Resizable } from 'react-resizable';
 import classNames from 'classnames';
 import { perc, setTopLeft, setTransform } from './utils';
 // import { Element as ReactElement, Node as ReactNode } from "react";
-
-import {
-    ReactDraggableCallbackData,
-    GridDragEvent,
-    GridResizeEvent,
-    Position,
-} from './utils';
-
-type PartialPosition = {
-    top: number;
-    left: number;
-};
 
 type GridItemCallback<Data extends GridDragEvent | GridResizeEvent> = (i: string, w: number, h: number, a: Data) => undefined;
 
@@ -188,7 +175,7 @@ export default class GridItem extends React.Component<Props, State> {
    * @param  {Number}  h             H coordinate in grid units.
    * @return {Object}                Object containing coords.
    */
-    calcPosition(x: number, y: number, w: number, h: number, state?: any): Position {
+    calcPosition(x: number, y: number, w: number, h: number, state?: any): PositionType {
         const {
             margin, containerPadding, rowHeight, isDroppingItem,
         } = this.props;
@@ -303,7 +290,7 @@ export default class GridItem extends React.Component<Props, State> {
    * @param  {Object} pos Position object with width, height, left, top.
    * @return {Object}     Style object.
    */
-    createStyle(pos: Position): {
+    createStyle(pos: PositionType): {
         [key: string]: string | null | undefined;
     } {
         const { usePercentages, containerWidth, useCSSTransforms } = this.props;
@@ -355,7 +342,7 @@ export default class GridItem extends React.Component<Props, State> {
    * @param  {Object} position  Position object (pixel values)
    * @return {Element}          Child wrapped in Resizable.
    */
-    mixinResizable(child: React.ReactElement<any>, position: Position): React.ReactElement<any> {
+    mixinResizable(child: React.ReactElement<any>, position: PositionType): React.ReactElement<any> {
         const {
             cols, x, minW, minH, maxW, maxH,
         } = this.props;
@@ -492,7 +479,7 @@ export default class GridItem extends React.Component<Props, State> {
         e: Event,
         callbackData: {
             node: HTMLElement;
-            size: Position;
+            size: PositionType;
         },
     ) => {
         this.onResizeHandler(e, callbackData, 'onResizeStop');
@@ -507,7 +494,7 @@ export default class GridItem extends React.Component<Props, State> {
         e: Event,
         callbackData: {
             node: HTMLElement;
-            size: Position;
+            size: PositionType;
         },
     ) => {
         this.onResizeHandler(e, callbackData, 'onResizeStart');
@@ -522,7 +509,7 @@ export default class GridItem extends React.Component<Props, State> {
         e: Event,
         callbackData: {
             node: HTMLElement;
-            size: Position;
+            size: PositionType;
         },
     ) => {
         this.onResizeHandler(e, callbackData, 'onResize');
@@ -543,7 +530,7 @@ export default class GridItem extends React.Component<Props, State> {
             size,
         }: {
             node: HTMLElement;
-            size: Position;
+            size: PositionType;
         },
         handlerName: string,
     ) {

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
-import { isEqual, debounce } from 'lodash';
+import * as isEqual from 'lodash.isequal';
 import * as classNames from 'classnames';
 import {
     autoBindHandlers,
@@ -21,17 +21,7 @@ import {
     noop,
 } from './utils';
 import GridItem from './GridItem';
-import {
-    EventCallback,
-    CompactType,
-    GridResizeEvent,
-    GridDragEvent,
-    DragOverEvent,
-    Layout,
-    Position,
-    DroppingPosition,
-    LayoutItem,
-} from './utils';
+
 import {
     emitItemOutEvent, bindItemOutEvent, emitItemDropEvent, bindItemDropEvent,
 } from './eventUtils';
@@ -51,7 +41,7 @@ type State = {
     propsLayout?: Layout;
 };
 
-export type Props = {
+export type PropsType = {
     className: string;
     style: any;
     width: number;
@@ -76,7 +66,7 @@ export type Props = {
     transformScale: number;
     droppingItem: Partial<LayoutItem>;
     // Callbacks
-    onLayoutChange: (a: Layout, b: Position) => void;
+    onLayoutChange: (a: Layout, b: PositionType) => void;
     onDrag: EventCallback;
     onDragStart: EventCallback;
     onDragStop: EventCallback;
@@ -102,10 +92,10 @@ export type Props = {
 
 // End Types
 
-const compactType = (props: Props): CompactType => {
-    const { verticalCompact, compactType } = props || {};
+const compactType = (props: PropsType): CompactType => {
+    const { verticalCompact, compactType: theCompactType } = props || {};
 
-    return verticalCompact === false ? null : compactType;
+    return verticalCompact === false ? null : theCompactType;
 };
 
 const layoutClassName = 'react-grid-layout';
@@ -115,7 +105,7 @@ const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
  * A reactive, fluid grid layout with draggable, resizable components.
  */
 
-class RGL extends React.Component<Props, State> {
+class RGL extends React.Component<PropsType, State> {
     // TODO publish internal ReactClass displayName transform
     static displayName = 'ReactGridLayout';
 
@@ -144,7 +134,7 @@ class RGL extends React.Component<Props, State> {
         rglKey: PropTypes.string,
 
         // Deprecated
-        verticalCompact(props: Props) {
+        verticalCompact(props: PropsType) {
             if (
                 props.verticalCompact === false
                 && process.env.NODE_ENV !== 'production'
@@ -161,7 +151,7 @@ class RGL extends React.Component<Props, State> {
 
         // layout is an array of object with the format:
         // {x: Number, y: Number, w: Number, h: Number, i: String}
-        layout(props: Props) {
+        layout(props: PropsType) {
             const layout = props.layout;
             // I hope you're setting the data-grid property on the grid items
             if (layout === undefined) return;
@@ -239,7 +229,7 @@ class RGL extends React.Component<Props, State> {
         }),
 
         // Children must not have duplicate keys.
-        children(props: Props, propName: string) {
+        children(props: PropsType, propName: string) {
             const children = props[propName];
 
             // Check children keys for duplicates. Throw if found.
@@ -325,14 +315,14 @@ class RGL extends React.Component<Props, State> {
 
     otherItemIn: boolean = false;
 
-    rglContainerPos: Position = {
+    rglContainerPos: PositionType = {
         left: 0,
         top: 0,
         width: 0,
         height: 0,
     }
 
-    constructor(props: Props, context: any) {
+    constructor(props: PropsType, context: any) {
         super(props, context);
         autoBindHandlers(this, [
             'onDragStart',
@@ -344,7 +334,7 @@ class RGL extends React.Component<Props, State> {
         ]);
     }
 
-    static getDerivedStateFromProps(nextProps: Props, prevState: State) {
+    static getDerivedStateFromProps(nextProps: PropsType, prevState: State) {
         let newLayoutBase;
 
         // if (prevState.activeDrag) {
@@ -425,7 +415,7 @@ class RGL extends React.Component<Props, State> {
         });
     }
 
-    componentDidUpdate(prevProps: Props, prevState: State) {
+    componentDidUpdate(prevProps: PropsType, prevState: State) {
         if (!this.state.activeDrag) {
             const newLayout = this.state.layout;
             const oldLayout = prevState.layout;
@@ -946,7 +936,7 @@ class RGL extends React.Component<Props, State> {
         });
     }
 
-    onDragOver = (e: DragOverEvent) => {
+    onDragOver = (e: any) => {
         // we should ignore events from layout's children in Firefox
         // to avoid unpredictable jumping of a dropping placeholder
         if (
