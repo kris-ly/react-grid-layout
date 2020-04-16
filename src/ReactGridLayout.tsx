@@ -85,7 +85,10 @@ export type PropsType = {
             y: number;
             w: number;
             h: number;
-        }
+            i: string;
+            name: string;
+        },
+        Layout,
     ) => undefined;
     children: Array<React.ReactElement<any>>;
 };
@@ -1002,11 +1005,12 @@ class RGL extends React.Component<PropsType, State> {
         this.dragEnterCounter++;
     };
 
-    onDrop = () => {
+    onDrop = (e) => {
         const { droppingItem } = this.props;
+        const name = e.dataTransfer.getData('name');
         const { layout } = this.state;
         const {
-            x, y, w, h,
+            x, y = 0, w = 0, h = 0, i = '',
         } = layout.find(l => l.i === droppingItem.i) || {};
 
         // reset gragEnter counter on drop
@@ -1014,8 +1018,13 @@ class RGL extends React.Component<PropsType, State> {
         this.removeDroppingPlaceholder();
         this.props.onDrop({
             // @ts-ignore
-            x, y, w, h,
-        });
+            x,
+            y,
+            w,
+            h,
+            name,
+            i,
+        }, layout);
     };
 
     render() {

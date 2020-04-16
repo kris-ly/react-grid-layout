@@ -76,8 +76,8 @@ export default class DragFromOutsideLayout extends React.Component {
         });
     };
 
-    onDrop = (elemParams) => {
-        alert(`Element parameters: ${JSON.stringify(elemParams)}`);
+    onDrop = (elemParams, Layout) => {
+        console.log(`Element parameters: ${JSON.stringify(elemParams)}`, Layout);
     };
 
     render() {
@@ -110,7 +110,10 @@ columns)
                     // Firefox requires some kind of initialization
                     // which we can do by adding this attribute
                     // @see https://bugzilla.mozilla.org/show_bug.cgi?id=568313
-                    onDragStart={e => e.dataTransfer.setData('text/plain', '')}
+                    onDragStart={e => {
+                        e.dataTransfer.setData('text/plain', '')
+                        e.dataTransfer.setData('name', 'kris')
+                    }}
                 >
           Droppable Element
                 </div>
@@ -122,6 +125,11 @@ columns)
                     onDrop={this.onDrop}
                     // WidthProvider option
                     measureBeforeMount={false}
+                    droppingItem={{
+                        w: 4,
+                        h:2,
+                        i: 101
+                    }}
                     // I like to have it animate on mount. If you don't, delete `useCSSTransforms` (it's default `true`)
                     // and set `measureBeforeMount={true}`.
                     useCSSTransforms={this.state.mounted}

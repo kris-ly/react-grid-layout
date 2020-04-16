@@ -174,17 +174,23 @@ var RGL = /** @class */ (function (_super) {
             }
             _this.dragEnterCounter++;
         };
-        _this.onDrop = function () {
+        _this.onDrop = function (e) {
             var droppingItem = _this.props.droppingItem;
+            var name = e.dataTransfer.getData('name');
             var layout = _this.state.layout;
-            var _a = layout.find(function (l) { return l.i === droppingItem.i; }) || {}, x = _a.x, y = _a.y, w = _a.w, h = _a.h;
+            var _a = layout.find(function (l) { return l.i === droppingItem.i; }) || {}, x = _a.x, _b = _a.y, y = _b === void 0 ? 0 : _b, _c = _a.w, w = _c === void 0 ? 0 : _c, _d = _a.h, h = _d === void 0 ? 0 : _d, _e = _a.i, i = _e === void 0 ? '' : _e;
             // reset gragEnter counter on drop
             _this.dragEnterCounter = 0;
             _this.removeDroppingPlaceholder();
             _this.props.onDrop({
                 // @ts-ignore
-                x: x, y: y, w: w, h: h,
-            });
+                x: x,
+                y: y,
+                w: w,
+                h: h,
+                name: name,
+                i: i,
+            }, layout);
         };
         utils_1.autoBindHandlers(_this, [
             'onDragStart',
