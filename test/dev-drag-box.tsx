@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import 'react-hot-loader';
 import { hot } from 'react-hot-loader/root';
-import DevLayout from './examples/containerazition/index';
+import DevLayout from './examples/18-dragRow';
 
 function run() {
     const contentDiv = document.getElementById('content');
