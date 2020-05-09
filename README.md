@@ -1,6 +1,6 @@
 # 基于react的拖拽实现方案
 
-**包含一维布局和二维布局，一维布局基于 sortablejs, 二维布局基于 react-grid-layout。**
+**包含一维布局和二维布局，一维布局基于 sortablejs 开发, 二维布局基于 react-grid-layout 开发。**
 
 一维拖拽效果如下：
 ![一维拖拽效果](https://km.sankuai.com/api/file/cdn/212526245/329495889?contentType=1&isNewContent=false&isNewContent=false)
@@ -11,7 +11,7 @@
 
 ## 一、一维布局介绍
 
-支持嵌套、扩容器拖拽、拖拽排序以及交换顺序、多选拖拽等功能。支持PC端和移动端
+支持嵌套、跨容器拖拽、拖拽排序以及交换顺序、多选拖拽等功能。支持PC端和移动端
 
 ### 基本用法
 ```JavaScript
@@ -166,7 +166,7 @@ Sortable应该排序的方向。可以设置为“vertical”，“horizontal”
 
 类型： EventCallback
 
-元素渲染时的回调
+元素渲染时的回调函数
 
 ```
 onChoose: function (/**Event*/evt) {
@@ -176,7 +176,10 @@ onChoose: function (/**Event*/evt) {
 
 **更多回调函数:**
 
-//未选择元素
+```
+type EventCallback = (evt) => void;
+
+// 未选择元素
 onUnchoose：EventCallback;
 
 //开始拖动元素
@@ -208,7 +211,7 @@ onClone：EventCallback;
 
 //拖动元素更改位置时调用
 onChange：EventCallback;
-
+```
 
 ### EventCallback 参数 evt 对象的属性
 
