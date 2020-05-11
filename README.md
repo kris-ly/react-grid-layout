@@ -23,17 +23,28 @@ export default class DragRow extends React.Component<any, any> {
     render() {
         return (
             <div>
-            <DragBox group="shared">
-                <div style={{width: '100%', background: '#aaa'}}>1</div>
-                <div>2</div>
-                <div>3</div>
-            </DragBox >
-            <DragBox 
-                group="shared" 
-                style={{border: '1px solid green'}}
-            >
-                    {arr.map(item => <div>{item}</div> )}
-            </DragBox>
+                <DragBox group="shared">
+                    <p 
+                        style={{width: '100%', background: '#aaa'}}
+                        data-obj="{name: 1}"
+                        className="box1">
+                        <span>1</span>
+                    </p>
+                        <div data-obj="{{ name: 2 }}" ><p>1</p></div>
+                    <div data-obj="{{ name: 3 }}">
+                            <span>1</span>
+                    </div>
+                </DragBox >
+                <DragBox 
+                    group="shared" 
+                    style={{border: '1px solid green'}}
+                        onAdd={(evt) => { 
+                            // 打印 dataset
+                            console.log(evt.item.dataset);
+                        }}
+                >
+                        {arr.map(item => <div>{item}</div> )}
+                </DragBox>
             </div>
         );
     }
@@ -162,6 +173,8 @@ Sortable应该排序的方向。可以设置为“vertical”，“horizontal”
 
 类型：number
 
+### 事件 Props
+
 #### onChoose
 
 类型： EventCallback
@@ -169,49 +182,39 @@ Sortable应该排序的方向。可以设置为“vertical”，“horizontal”
 元素渲染时的回调函数
 
 ```
-onChoose: function (/**Event*/evt) {
-  evt.oldIndex;  // element index within parent
+setData: (/** DataTransfer */dataTransfer, /** HTMLElement*/dragEl) => {
+    dataTransfer.setData('Text', dragEl.textContent); // `dataTransfer` object of HTML5 DragEvent
 }
 ```
 
 **更多回调函数:**
-
 ```
 type EventCallback = (evt) => void;
-
-// 未选择元素
-onUnchoose：EventCallback;
-
-//开始拖动元素
-onStart：EventCallback;
-
-//元素拖动结束
-onEnd：EventCallback;
-
-//将元素从另一个列表拖放到列表中
-onAdd：EventCallback;
-
-//更改列表中的排序
-onUpdate：EventCallback;
-
-//由列表的任何更改调用（添加/更新/删除）
-onSort：EventCallback;
-
-//将元素从列表中删除到另一个列表中
-onRemove：EventCallback;
-
-//尝试拖动已过滤的元素
-onFilter：EventCallback;
-
-//在列表中或列表之间移动项目时发生的事件
-onMove：（/ **事件* / evt：任何，/ **事件* / originalEvent：任何）=>无效;
-
-//创建元素的克隆时调用
-onClone：EventCallback;
-
-//拖动元素更改位置时调用
-onChange：EventCallback;
 ```
+
+- 选择某个元素：onChoose: EventCallback;
+
+- 取消选择元素 onUnchoose: EventCallback;
+
+- 开始拖动元素 onStart：EventCallback;
+
+- 元素拖动结束 onEnd：EventCallback;
+
+- 添加元素：onAdd：EventCallback;
+
+- 更改列表中的排序 onUpdate：EventCallback;
+
+- 由列表的任何更改调用（添加/更新/删除） onSort：EventCallback;
+
+- 将元素从列表中删除到另一个列表中 onRemove：EventCallback;
+
+- 尝试拖动已过滤的元素 onFilter：EventCallback;
+
+- 在列表中或列表之间移动项目时发生的事件 onMove：（/ **事件* / evt：任何，/ **事件* / originalEvent：任何）=>无效;
+
+- 创建元素的克隆时调用 onClone：EventCallback;
+
+- 拖动元素更改位置时调用 onChange：EventCallback;
 
 ### EventCallback 参数 evt 对象的属性
 

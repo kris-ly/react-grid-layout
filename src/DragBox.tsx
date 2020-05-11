@@ -2,6 +2,7 @@
  * tabs标签页调整顺序
  */
 import * as React from 'react';
+import classNames from 'classnames';
 import Sortable, { MultiDrag, Swap, utils } from 'sortablejs';
 
 export const dragUtils = utils;
@@ -134,7 +135,12 @@ export default class DragBox extends React.Component<DragLineProps> {
                 ref={this.containerRef}
                 style={style}
             >
-                {React.Children.map(children, child => <div className="drag-line-item">{child}</div>)}
+                {React.Children.map(children, child => React.cloneElement(child, {
+                    className: classNames(
+                        'drag-box-item',
+                        child.props.className,
+                    ),
+                }))}
             </div>
         );
     }
