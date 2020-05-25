@@ -1,6 +1,6 @@
 {
   "name": "@dfe/react-easy-drag",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "A draggable and resizable grid layout for React.",
   "main": "index.js",
   "scripts": {
