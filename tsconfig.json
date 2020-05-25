@@ -5,6 +5,7 @@
         "moduleResolution": "node",
         "preserveConstEnums": true,
         "experimentalDecorators": true,
+        "declaration": true,
         "strict": true,
         "jsx": "react",
         "jsxFactory": "React.createElement",

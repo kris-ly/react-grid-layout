@@ -7,7 +7,13 @@ export default class DragRow extends React.Component<any, any> {
     render() {
         return (
             <div>
-                <DragBox group="shared">
+                <DragBox
+                    group={{
+                        name: "shared",
+                        pull: 'clone',
+                        removeCloneOnHide: false,
+                    }}
+                >
                     <p 
                         style={{width: '100%', background: '#aaa'}}
                         data-obj="{name: 1}"
@@ -20,7 +26,8 @@ export default class DragRow extends React.Component<any, any> {
                     </div>
                 </DragBox >
                 <DragBox 
-                    group="shared" 
+                    group="shared"
+                    removeDraginItem
                     style={{border: '1px solid green'}}
                         onAdd={(evt) => { 
                             // 打印 dataset

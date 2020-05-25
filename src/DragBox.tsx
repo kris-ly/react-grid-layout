@@ -24,6 +24,7 @@ interface DragLineProps {
     allowSwag?: Boolean;
     allowMultiDrag?: Boolean;
     style?: any;
+    removeDraginItem?: boolean;
 
     group: string | any;
     sort: Boolean; // sorting inside list
@@ -103,6 +104,7 @@ export default class DragBox extends React.Component<DragLineProps> {
     static defaultProps = {
         allowSwag: false,
         allowMultiDrag: false,
+        removeDraginItem: false,
     }
 
     containerRef: any = null;
@@ -114,7 +116,7 @@ export default class DragBox extends React.Component<DragLineProps> {
 
     componentDidMount() {
         const {
-            allowSwag, allowMultiDrag, children, ...dragProps
+            allowSwag, allowMultiDrag, children, onAdd, removeDraginItem, ...dragProps
         } = this.props;
         const dragContainer = this.containerRef.current;
         if (allowMultiDrag) {
@@ -124,7 +126,16 @@ export default class DragBox extends React.Component<DragLineProps> {
             Sortable.mount(new Swap());
         }
 
-        Sortable.create(dragContainer, dragProps);
+        Sortable.create(dragContainer, {
+            ...dragProps,
+            onAdd: removeDraginItem ? (evt) => {
+                const { item } = evt;
+                if (item.parentNode) {
+                    item.parentNode.removeChild(item);
+                }
+                this.props.onAdd(evt);
+            } : onAdd,
+        });
     }
 
     render() {
