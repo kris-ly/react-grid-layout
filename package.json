@@ -6,11 +6,10 @@
   "scripts": {
     "lint": "make lint",
     "test": "make test",
-    "build": "tsc --outDir library",
+    "build": "tsc",
     "build-example": "make build-example",
     "dev": "make dev",
     "validate": "npm ls",
-    "tsc": "tsc --outDir library",
     "precommit": "lint-staged && make lint"
   },
   "keywords": [
@@ -20,6 +19,7 @@
     "resizable",
     "responsive"
   ],
+  "types": "library/*.d.ts",
   "author": "liuyang146@meituan.com",
   "dependencies": {
     "classnames": "2.x",

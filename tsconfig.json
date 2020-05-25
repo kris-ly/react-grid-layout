@@ -6,6 +6,7 @@
         "preserveConstEnums": true,
         "experimentalDecorators": true,
         "declaration": true,
+        "outDir": "./library",
         "strict": true,
         "jsx": "react",
         "jsxFactory": "React.createElement",
