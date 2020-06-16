@@ -3,6 +3,7 @@
 **包含自由拖拽、一维布局和二维布局，自由拖拽基于h5原始的拖拽，一维布局基于 sortablejs 开发, 二维布局基于 react-grid-layout 开发。**
 
 自由拖拽效果如下：
+
 ![自由拖拽效果](https://km.sankuai.com/api/file/cdn/224174437/361821627?contentType=0&isNewContent=false&download=true)
 
 一维拖拽效果如下：
@@ -13,7 +14,9 @@
 ![二维拖拽效果](https://km.sankuai.com/api/file/cdn/212656993/212752555?contentType=1&isNewContent=false&isNewContent=false)
 
 ##一、自由拖拽介绍
+
 不受容器限制，可以自由拖拽，支持嵌套。
+
 ### 基本用法
 ```javascript
 import * as React from 'react';
