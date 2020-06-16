@@ -7,7 +7,7 @@ import { throttle } from 'lodash';
 
 interface DragItemProps {
     style?: any;
-    transferData: any;
+    transferData: string;
     onDragStart: (evt: any) => void;
     onDrag: (evt: any) => void;
     onDragEnd: (evt: any) => void;

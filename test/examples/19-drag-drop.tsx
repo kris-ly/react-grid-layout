@@ -28,7 +28,6 @@ export default class DragRow extends React.Component<any, any> {
                     >这个也可以拖</DragItem>
                 </DragItem>
                 <DropItem
-                    className="dropabled target"
                     dropEffect="copy"
                     style={{ height: 300, border: '1px solid #ddd' }}
                     onDrop={this.handle_drop}

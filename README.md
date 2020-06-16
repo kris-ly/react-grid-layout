@@ -1,6 +1,9 @@
 # 基于react的拖拽实现方案
 
-**包含一维布局和二维布局，一维布局基于 sortablejs 开发, 二维布局基于 react-grid-layout 开发。**
+**包含自由拖拽、一维布局和二维布局，自由拖拽基于h5原始的拖拽，一维布局基于 sortablejs 开发, 二维布局基于 react-grid-layout 开发。**
+
+自由拖拽效果如下：
+![自由拖拽效果](https://km.sankuai.com/api/file/cdn/224174437/361821627?contentType=0&isNewContent=false&download=true)
 
 一维拖拽效果如下：
 ![一维拖拽效果](https://km.sankuai.com/api/file/cdn/212526245/329495889?contentType=1&isNewContent=false&isNewContent=false)
@@ -8,6 +11,67 @@
 
 二维布局拖拽效果如下：
 ![二维拖拽效果](https://km.sankuai.com/api/file/cdn/212656993/212752555?contentType=1&isNewContent=false&isNewContent=false)
+
+##一、自由拖拽介绍
+不受容器限制，可以自由拖拽，支持嵌套。
+### 基本用法
+```javascript
+import * as React from 'react';
+import * as RED from '@dfe/react-easy-drag';
+
+const { DragItem ,DropItem } = RED;
+
+export default class DragRow extends React.Component<any, any> {
+    state = {
+        data: '',
+    }
+    handle_drop = (e, data) => {
+        console.log('handle_drop-当元素在目的地放下时触发')
+        console.log('dataTransfer', data);
+        this.setState({
+            data,
+        })
+    }
+    render() {
+        const { data } = this.state;
+        return (
+            <div className="src">
+                <DragItem 
+                    transferData="{ name: 'kris' }"
+                    style={{ height: 200, width: 400, border: '1px solid #aaa'}}
+                >
+                            此段文字设置了属性draggable="true"
+                    <DragItem 
+                        transferData="{ name: 'alice' }"
+                    >这个也可以拖</DragItem>
+                </DragItem>
+                <DropItem
+                    dropEffect="copy"
+                    style={{ height: 300, border: '1px solid #ddd' }}
+                    onDrop={this.handle_drop}
+                >
+                    Drop Here
+                    <div>{data}</div>
+                </DropItem>
+            </div>
+        )}
+}
+```
+### DragItem props：
+- `style?: any; ` ——定制可拖动元素的样式
+- `transferData: string;`——拖动时传递给DropItem的数据
+- `onDragStart: (evt: any) => void;`——开始拖动时的回调函数
+- `onDrag: (evt: any) => void;` —— 拖动中的回调函数
+- `onDragEnd: (evt: any) => void;` —— 拖动结束的回调函数
+
+### DragItem props：
+- `style?: any;` ——定制接受拖拽元素容器的样式
+-  `dropEffect?: ;`——定制拖入时鼠标的样式，可能值之一：【none、move、copy、link】
+- `onDragEnter: (evt: any, data: any) => void;`—— 有拖拽元素进入时的回调函数，`data`对应`DragItem`的`transferData`
+- `onDragOver: (evt: any, data: any) => void;`—— 有拖拽元素在内部移动时的回调函数
+-  `onDragLeave: (evt: any, data: any) => void;`——有拖拽元素离开时的回调函数（进入子元素也会触发）
+
+-  `onDrop: (evt: any, data: any) => void;`—— 有元素放置在里面时触发的回调。
 
 ## 一、一维布局介绍
 
