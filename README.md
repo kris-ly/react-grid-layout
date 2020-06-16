@@ -13,7 +13,7 @@
 二维布局拖拽效果如下：
 ![二维拖拽效果](https://km.sankuai.com/api/file/cdn/212656993/212752555?contentType=1&isNewContent=false&isNewContent=false)
 
-##一、自由拖拽介绍
+## 一、自由拖拽介绍
 
 不受容器限制，可以自由拖拽，支持嵌套。
 
