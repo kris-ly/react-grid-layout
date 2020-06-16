@@ -14,6 +14,13 @@ declare module '*.png'
 declare module '*.jpg'
 declare module '*.jpeg'
 
+
+declare module '@dfe/react-easy-drag' {
+    const RED: any;
+    // eslint-disable-next-line
+    export default RED;
+}
+
 interface CommonElement {
     styleName?: string;
     [propName: string]: any;

@@ -1,7 +1,5 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import 'style-loader!css-loader!../css/styles.css';
-import 'style-loader!css-loader!../examples/example-styles.css';
 
 typeof window !== 'undefined' && (window.React = React); // for devtools
 
