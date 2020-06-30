@@ -67,7 +67,7 @@ export default class DragRow extends React.Component<any, any> {
 - `onDrag: (evt: any) => void;` —— 拖动中的回调函数
 - `onDragEnd: (evt: any) => void;` —— 拖动结束的回调函数
 
-### DragItem props：
+### DropItem props：
 - `style?: any;` ——定制接受拖拽元素容器的样式
 -  `dropEffect?: ;`——定制拖入时鼠标的样式，可能值之一：【none、move、copy、link】
 - `onDragEnter: (evt: any, data: any) => void;`—— 有拖拽元素进入时的回调函数，`data`对应`DragItem`的`transferData`
