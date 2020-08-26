@@ -25,10 +25,13 @@ export default class BasicLayout extends React.PureComponent {
     }
 
     generateDOM() {
-        return _.map(_.range(this.props.items), i => (
-            <div key={i}>
+        const { layout } = this.state;
+        console.log('generateDOM', layout);
+        
+        return _.map(layout, i => (
+            <div key={i.i}>
                 <div className="drag-layout-handle-area">drag</div>
-                <span className="text">{i}</span>
+                <span className="text">{i.key}</span>
             </div>
         ));
     }
@@ -48,8 +51,14 @@ export default class BasicLayout extends React.PureComponent {
         });
     }
 
-    onLayoutChange(layout) {
+    onLayoutChange(layout, layouts) {
+        console.log('onLayoutChange(layout, layouts)', layout, layouts);
         this.props.onLayoutChange(layout);
+    }
+
+    onDrop = (params, layout) => {
+        const dropItem = layout.filter(item => item.i === '21')
+        this.setState({layout })
     }
 
     render() {
@@ -72,6 +81,7 @@ draggerble element
                     style={{ border: '1px solid #333' }}
                     draggableHandle=".drag-layout-handle-area"
                     onLayoutChange={this.onLayoutChange}
+                    onDrop={this.onDrop}
                     isDroppable
                     {...this.props}
                 >

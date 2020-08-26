@@ -84,24 +84,14 @@ export default class DragFromOutsideLayout extends React.Component {
         return (
             <div>
                 <div>
-          Current Breakpoint:
-                    {' '}
+                    Current Breakpoint:
                     {this.state.currentBreakpoint}
-                    {' '}
-(
                     {this.props.cols[this.state.currentBreakpoint]}
-                    {' '}
-columns)
+                    columns
                 </div>
-                <div>
-          Compaction type:
-                    {' '}
-                    {_.capitalize(this.state.compactType) || 'No Compaction'}
-                </div>
+                <div>Compaction type:{_.capitalize(this.state.compactType) || 'No Compaction'}</div>
                 <button onClick={this.onNewLayout}>Generate New Layout</button>
-                <button onClick={this.onCompactTypeChange}>
-          Change Compaction Type
-                </button>
+                <button onClick={this.onCompactTypeChange}>Change Compaction Type</button>
                 <div
                     className="droppable-element"
                     draggable
@@ -114,9 +104,8 @@ columns)
                         e.dataTransfer.setData('text/plain', '')
                         e.dataTransfer.setData('name', 'kris')
                     }}
-                >
-          Droppable Element
-                </div>
+                >Droppable Element</div>
+                <div style={{ height: 600, overflowY: 'auto' }}>
                 <ResponsiveReactGridLayout
                     {...this.props}
                     layouts={this.state.layouts}
@@ -139,6 +128,7 @@ columns)
                 >
                     {this.generateDOM()}
                 </ResponsiveReactGridLayout>
+                </div>
             </div>
         );
     }
